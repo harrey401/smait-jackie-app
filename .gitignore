@@ -13,3 +13,11 @@
 .externalNativeBuild
 .cxx
 local.properties
+mockup*
+*.pyc
+__pycache__/
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
