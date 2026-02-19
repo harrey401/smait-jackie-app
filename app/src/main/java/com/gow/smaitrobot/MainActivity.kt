@@ -822,16 +822,27 @@ class MainActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     private fun createCaptureSession() {
         try {
-            val texture = cameraPreview.surfaceTexture ?: return
-            texture.setDefaultBufferSize(640, 480)
-            val previewSurface = Surface(texture)
-            val surfaces = listOf(previewSurface, imageReader!!.surface)
+            val surfaces = mutableListOf<Surface>()
+
+            // Add preview surface only if TextureView is available (it may be GONE on idle screen)
+            var previewSurface: Surface? = null
+            val texture = cameraPreview.surfaceTexture
+            if (texture != null) {
+                texture.setDefaultBufferSize(640, 480)
+                previewSurface = Surface(texture)
+                surfaces.add(previewSurface)
+            } else {
+                Log.i(TAG, "Camera preview not visible — using ImageReader-only capture (streaming mode)")
+            }
+
+            // Always capture to ImageReader for WebSocket streaming
+            surfaces.add(imageReader!!.surface)
 
             cameraDevice?.createCaptureSession(surfaces, object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
                     val builder = cameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    builder?.addTarget(previewSurface)
+                    previewSurface?.let { builder?.addTarget(it) }
                     builder?.addTarget(imageReader!!.surface)
                     builder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                     builder?.let { session.setRepeatingRequest(it.build(), null, cameraHandler) }
@@ -957,6 +968,10 @@ class MainActivity : AppCompatActivity() {
                 reconnectDelay = INITIAL_RECONNECT_DELAY_MS
                 updateConnectionDot(true)
                 startAudioCapture()
+                // Start camera immediately on connect (don't wait for TextureView)
+                runOnUiThread {
+                    if (hasPermissions()) openCamera()
+                }
                 Log.i(TAG, "Connected to $url")
             }
 
