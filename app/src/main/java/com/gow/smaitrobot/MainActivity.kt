@@ -39,7 +39,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Surface
-import android.view.SurfaceTexture
+import android.graphics.SurfaceTexture
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
