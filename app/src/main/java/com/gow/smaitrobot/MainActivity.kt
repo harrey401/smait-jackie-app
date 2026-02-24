@@ -49,6 +49,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -124,6 +125,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsIpInput: TextInputEditText
     private lateinit var settingsPortInput: TextInputEditText
     private lateinit var settingsSheet: LinearLayout
+
+    // Config panel
+    private lateinit var configOverlay: FrameLayout
+    private lateinit var vadSeekBar: SeekBar
+    private lateinit var asdSeekBar: SeekBar
+    private lateinit var timeoutSeekBar: SeekBar
+    private lateinit var vadLabel: TextView
+    private lateinit var asdLabel: TextView
+    private lateinit var timeoutLabel: TextView
 
     // ─── State ───
     private enum class AppState { IDLE, ENGAGED }
@@ -300,6 +310,55 @@ class MainActivity : AppCompatActivity() {
         // Click overlay background to dismiss settings
         settingsOverlay.setOnClickListener { hideSettings() }
         settingsSheet.setOnClickListener { /* consume click */ }
+
+        // Config panel
+        configOverlay = findViewById(R.id.configOverlay)
+        vadSeekBar = findViewById(R.id.vadSeekBar)
+        asdSeekBar = findViewById(R.id.asdSeekBar)
+        timeoutSeekBar = findViewById(R.id.timeoutSeekBar)
+        vadLabel = findViewById(R.id.vadLabel)
+        asdLabel = findViewById(R.id.asdLabel)
+        timeoutLabel = findViewById(R.id.timeoutLabel)
+
+        // Gear button
+        findViewById<TextView>(R.id.gearButton).setOnClickListener { showConfigPanel() }
+
+        // Config overlay dismiss
+        configOverlay.setOnClickListener { configOverlay.visibility = View.GONE }
+        findViewById<LinearLayout>(R.id.configSheet).setOnClickListener { /* consume */ }
+
+        // SeekBar listeners: VAD range 0.3–0.9, step 0.01, max=60, progress=(val-0.3)*100
+        vadSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 0.3f + progress / 100f
+                vadLabel.text = "Noise Sensitivity (VAD): %.2f".format(value)
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        // ASD range 0.10–0.50, step 0.05, max=8, progress=(val-0.10)/0.05
+        asdSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 0.10f + progress * 0.05f
+                asdLabel.text = "Speaker Strictness (ASD): %.2f".format(value)
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        // Timeout range 10–60, max=50, progress=val-10
+        timeoutSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 10 + progress
+                timeoutLabel.text = "Session Timeout: ${value}s"
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        // Apply button
+        findViewById<MaterialButton>(R.id.configApplyButton).setOnClickListener { applyConfig() }
 
         // Selfie buttons
         selfieButton.setOnClickListener { startSelfieCountdown() }
@@ -641,6 +700,38 @@ class MainActivity : AppCompatActivity() {
             .putString("server_ip", settingsIpInput.text.toString())
             .putString("server_port", settingsPortInput.text.toString())
             .apply()
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONFIG PANEL (Live Tuning)
+    // ═══════════════════════════════════════════════════════════════
+
+    private fun showConfigPanel() {
+        configOverlay.visibility = View.VISIBLE
+        configOverlay.alpha = 0f
+        configOverlay.animate().alpha(1f).setDuration(200).start()
+    }
+
+    private fun applyConfig() {
+        val vadValue = 0.3f + vadSeekBar.progress / 100f
+        val asdValue = 0.10f + asdSeekBar.progress * 0.05f
+        val timeoutValue = 10 + timeoutSeekBar.progress
+
+        val json = JSONObject().apply {
+            put("type", "config")
+            put("vad_threshold", vadValue.toDouble())
+            put("asd_min_score", asdValue.toDouble())
+            put("session_timeout", timeoutValue)
+        }
+
+        webSocket?.send(json.toString())
+        Log.i(TAG, "Config sent: $json")
+
+        configOverlay.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { configOverlay.visibility = View.GONE }
+            .start()
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1086,6 +1177,9 @@ class MainActivity : AppCompatActivity() {
                     val respText = json.getString("text")
                     addChatMessage(respText, false)
                     speakText(respText)
+                }
+                "config_ack" -> {
+                    Log.i(TAG, "Config acknowledged by server")
                 }
                 "user_name" -> {
                     val name = json.getString("name")

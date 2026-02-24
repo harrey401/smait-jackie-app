@@ -377,6 +377,137 @@
         </LinearLayout>
     </FrameLayout>
 
+    <!-- ==================== GEAR BUTTON (always visible) ==================== -->
+    <TextView
+        android:id="@+id/gearButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center"
+        android:text="⚙"
+        android:textSize="28sp"
+        android:textColor="#88FFFFFF"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="10dp" />
+
+    <!-- ==================== CONFIG OVERLAY ==================== -->
+    <FrameLayout
+        android:id="@+id/configOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#AA000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        android:elevation="20dp">
+
+        <LinearLayout
+            android:id="@+id/configSheet"
+            android:layout_width="420dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_settings_sheet"
+            android:orientation="vertical"
+            android:padding="28dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Live Config"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Slider 1: VAD Threshold -->
+            <TextView
+                android:id="@+id/vadLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Noise Sensitivity (VAD): 0.50"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp" />
+            <SeekBar
+                android:id="@+id/vadSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="60"
+                android:progress="20"
+                android:progressTint="#00BCD4"
+                android:thumbTint="#00BCD4" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOW ← → HIGH"
+                android:textColor="#666666"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Slider 2: ASD Min Score -->
+            <TextView
+                android:id="@+id/asdLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Speaker Strictness (ASD): 0.20"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp" />
+            <SeekBar
+                android:id="@+id/asdSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="8"
+                android:progress="2"
+                android:progressTint="#00BCD4"
+                android:thumbTint="#00BCD4" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOOSE ← → STRICT"
+                android:textColor="#666666"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Slider 3: Session Timeout -->
+            <TextView
+                android:id="@+id/timeoutLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Session Timeout: 30s"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp" />
+            <SeekBar
+                android:id="@+id/timeoutSeekBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="50"
+                android:progress="20"
+                android:progressTint="#00BCD4"
+                android:thumbTint="#00BCD4" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="10s ← → 60s"
+                android:textColor="#666666"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginBottom="20dp" />
+
+            <!-- Apply button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/configApplyButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Apply"
+                app:backgroundTint="#00BCD4"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
+    </FrameLayout>
+
     <!-- ==================== SETTINGS OVERLAY (Bottom Sheet) ==================== -->
     <FrameLayout
         android:id="@+id/settingsOverlay"
