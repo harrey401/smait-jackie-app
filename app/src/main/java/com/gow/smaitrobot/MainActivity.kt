@@ -27,6 +27,8 @@ import android.media.AudioRecord
 import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
+import android.media.audiofx.AcousticEchoCanceler
+import android.media.audiofx.NoiseSuppressor
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
@@ -154,6 +156,8 @@ class MainActivity : AppCompatActivity() {
     // ─── Audio ───
     private var audioRecord: AudioRecord? = null
     private var audioThread: Thread? = null
+    private var aec: AcousticEchoCanceler? = null
+    private var noiseSuppressor: NoiseSuppressor? = null
 
     // ─── TTS ───
     private var tts: TextToSpeech? = null
@@ -906,6 +910,20 @@ class MainActivity : AppCompatActivity() {
         )
         audioRecord?.startRecording()
 
+        // Enable hardware AEC and noise suppressor on this session
+        audioRecord?.audioSessionId?.let { sid ->
+            if (AcousticEchoCanceler.isAvailable()) {
+                aec = AcousticEchoCanceler.create(sid)?.also { it.enabled = true }
+                Log.i(TAG, "AEC enabled: ${aec != null}")
+            } else {
+                Log.w(TAG, "AEC not available on this device")
+            }
+            if (NoiseSuppressor.isAvailable()) {
+                noiseSuppressor = NoiseSuppressor.create(sid)?.also { it.enabled = true }
+                Log.i(TAG, "NoiseSuppressor enabled: ${noiseSuppressor != null}")
+            }
+        }
+
         audioThread = Thread {
             val buffer = ByteArray(bufferSize)
             while (isStreaming.get()) {
@@ -923,6 +941,8 @@ class MainActivity : AppCompatActivity() {
     private fun stopAudioCapture() {
         audioThread?.interrupt()
         audioThread = null
+        aec?.release(); aec = null
+        noiseSuppressor?.release(); noiseSuppressor = null
         try {
             audioRecord?.stop()
             audioRecord?.release()
