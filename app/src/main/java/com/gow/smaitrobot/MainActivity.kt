@@ -177,6 +177,8 @@ class MainActivity : AppCompatActivity() {
 
     // ─── Selfie ───
     private var selfieBitmap: Bitmap? = null
+    private val selfieHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val selfieAutoDismiss = Runnable { dismissSelfie() }
 
     // ─── Session Timer ───
     private var sessionStartTime = 0L
@@ -362,8 +364,14 @@ class MainActivity : AppCompatActivity() {
 
         // Selfie buttons
         selfieButton.setOnClickListener { startSelfieCountdown() }
-        retakeButton.setOnClickListener { startSelfieCountdown() }
+        retakeButton.setOnClickListener {
+            selfieHandler.removeCallbacks(selfieAutoDismiss)
+            startSelfieCountdown()
+        }
         saveButton.setOnClickListener { saveSelfie() }
+        // Tap overlay background (outside card) to dismiss
+        selfieOverlay.setOnClickListener { dismissSelfie() }
+        selfiePreviewCard.setOnClickListener { /* consume — don't dismiss when tapping card */ }
 
         // Camera preview
         cameraPreview.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
@@ -1274,6 +1282,10 @@ class MainActivity : AppCompatActivity() {
         selfieActions.visibility = View.VISIBLE
         selfieActions.alpha = 0f
         selfieActions.animate().alpha(1f).setStartDelay(200).setDuration(200).start()
+
+        // Auto-dismiss after 8s so robot never stays frozen on selfie screen
+        selfieHandler.removeCallbacks(selfieAutoDismiss)
+        selfieHandler.postDelayed(selfieAutoDismiss, 8000)
     }
 
     private fun saveSelfie() {
@@ -1294,12 +1306,21 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save selfie", e)
         }
-        // Animate out
+        dismissSelfie()
+    }
+
+    private fun dismissSelfie() {
+        selfieHandler.removeCallbacks(selfieAutoDismiss)
+        selfieOverlay.animate().cancel()
         selfieOverlay.animate()
             .alpha(0f)
             .setDuration(250)
             .withEndAction {
                 selfieOverlay.visibility = View.GONE
+                selfieOverlay.alpha = 1f          // reset for next time
+                selfiePreviewCard.visibility = View.GONE
+                selfieActions.visibility = View.GONE
+                selfieBitmap = null
             }.start()
     }
 
@@ -1333,5 +1354,6 @@ class MainActivity : AppCompatActivity() {
         animators.forEach { it.cancel() }
         particleAnimator?.cancel()
         statusDotAnimator?.cancel()
+        selfieHandler.removeCallbacks(selfieAutoDismiss)
     }
 }
