@@ -898,7 +898,7 @@ class MainActivity : AppCompatActivity() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
 
         audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            MediaRecorder.AudioSource.VOICE_COMMUNICATION, // enables hardware AEC (echo cancel)
             SAMPLE_RATE,
             CHANNEL_CONFIG,
             AUDIO_FORMAT,
