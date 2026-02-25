@@ -46,8 +46,8 @@
 
             <ImageView
                 android:id="@+id/sjsuLogo"
-                android:layout_width="140dp"
-                android:layout_height="130dp"
+                android:layout_width="190dp"
+                android:layout_height="170dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/sjsu_logo"
                 android:contentDescription="SJSU Logo"
@@ -64,8 +64,8 @@
 
             <ImageView
                 android:id="@+id/biorobLogo"
-                android:layout_width="190dp"
-                android:layout_height="130dp"
+                android:layout_width="260dp"
+                android:layout_height="170dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/biorob_logo"
                 android:contentDescription="BioRob Lab Logo"
