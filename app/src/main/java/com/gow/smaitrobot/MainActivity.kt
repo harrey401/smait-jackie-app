@@ -194,6 +194,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ─── Session Watchdog (auto-return to idle if server doesn't notify) ───
+    private var lastActivityTime = 0L
+    private var configuredSessionTimeoutMs = 30_000L  // mirrors config slider default (30s)
+    private val WATCHDOG_GRACE_MS = 15_000L           // extra grace on top of configured timeout
+    private val sessionWatchdogRunnable = object : Runnable {
+        override fun run() {
+            if (currentState != AppState.ENGAGED) return
+            val sinceActivity = System.currentTimeMillis() - lastActivityTime
+            if (lastActivityTime > 0 && sinceActivity > configuredSessionTimeoutMs + WATCHDOG_GRACE_MS) {
+                Log.i(TAG, "Watchdog: no activity for ${sinceActivity}ms — returning to idle")
+                switchToState(AppState.IDLE)
+                clearChat()
+            } else {
+                mainHandler.postDelayed(this, 5_000)
+            }
+        }
+    }
+
     // ─── Animations ───
     private val animators = mutableListOf<ValueAnimator>()
     private val waveBars = mutableListOf<View>()
@@ -661,13 +679,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun startSessionTimer() {
         sessionStartTime = System.currentTimeMillis()
+        lastActivityTime = System.currentTimeMillis()
         sessionTimer.text = "0:00"
         mainHandler.post(timerRunnable)
+        mainHandler.postDelayed(sessionWatchdogRunnable, configuredSessionTimeoutMs + WATCHDOG_GRACE_MS)
     }
 
     private fun stopSessionTimer() {
         sessionStartTime = 0
+        lastActivityTime = 0
         mainHandler.removeCallbacks(timerRunnable)
+        mainHandler.removeCallbacks(sessionWatchdogRunnable)
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -724,6 +746,9 @@ class MainActivity : AppCompatActivity() {
         val vadValue = 0.3f + vadSeekBar.progress / 100f
         val asdValue = 0.10f + asdSeekBar.progress * 0.05f
         val timeoutValue = 10 + timeoutSeekBar.progress
+
+        // Keep client-side watchdog in sync with server timeout
+        configuredSessionTimeoutMs = timeoutValue * 1000L
 
         val json = JSONObject().apply {
             put("type", "config")
@@ -1155,6 +1180,7 @@ class MainActivity : AppCompatActivity() {
                 "transcript" -> {
                     val msg = json.getString("text")
                     val speaker = json.optString("speaker", "user")
+                    lastActivityTime = System.currentTimeMillis()
                     addChatMessage(msg, speaker == "user")
                 }
                 "state" -> {
@@ -1165,6 +1191,7 @@ class MainActivity : AppCompatActivity() {
                             clearChat()
                         }
                         "engaged", "active" -> {
+                            lastActivityTime = System.currentTimeMillis()
                             switchToState(AppState.ENGAGED)
                         }
                     }
@@ -1188,6 +1215,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 "config_ack" -> {
                     Log.i(TAG, "Config acknowledged by server")
+                }
+                "session_end", "session_ended" -> {
+                    Log.i(TAG, "Session ended by server — returning to idle")
+                    switchToState(AppState.IDLE)
+                    clearChat()
                 }
                 "user_name" -> {
                     val name = json.getString("name")
