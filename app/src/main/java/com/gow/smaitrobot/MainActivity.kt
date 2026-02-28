@@ -22,13 +22,8 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.AudioFormat
-import android.media.AudioRecord
 import android.media.Image
 import android.media.ImageReader
-import android.media.MediaRecorder
-import android.media.audiofx.AcousticEchoCanceler
-import android.media.audiofx.NoiseSuppressor
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
@@ -79,9 +74,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "Jackie"
         private const val PERMISSION_REQUEST_CODE = 100
-        private const val SAMPLE_RATE = 16000
-        private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
-        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         private const val INITIAL_RECONNECT_DELAY_MS = 1000L
         private const val MAX_RECONNECT_DELAY_MS = 30000L
         private const val AUDIO_TYPE: Byte = 0x01
@@ -163,11 +155,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var cameraThread: HandlerThread
     private var lastJpegBytes: ByteArray? = null
 
-    // ─── Audio ───
-    private var audioRecord: AudioRecord? = null
-    private var audioThread: Thread? = null
-    private var aec: AcousticEchoCanceler? = null
-    private var noiseSuppressor: NoiseSuppressor? = null
+    // ─── Audio (CAE Beamforming) ───
+    private lateinit var caeAudio: CaeAudioManager
 
     // ─── TTS ───
     private var tts: TextToSpeech? = null
@@ -243,6 +232,8 @@ class MainActivity : AppCompatActivity() {
         )
 
         prefs = getSharedPreferences("jackie_prefs", Context.MODE_PRIVATE)
+        caeAudio = CaeAudioManager(this)
+        caeAudio.copyAssetsIfNeeded()
         initUI()
         initTTS()
         initChat()
@@ -1022,56 +1013,14 @@ class MainActivity : AppCompatActivity() {
     // ═══════════════════════════════════════════════════════════════
 
     private fun startAudioCapture() {
-        val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
-
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION, // enables hardware AEC (echo cancel)
-            SAMPLE_RATE,
-            CHANNEL_CONFIG,
-            AUDIO_FORMAT,
-            bufferSize * 2
-        )
-        audioRecord?.startRecording()
-
-        // Enable hardware AEC and noise suppressor on this session
-        audioRecord?.audioSessionId?.let { sid ->
-            if (AcousticEchoCanceler.isAvailable()) {
-                aec = AcousticEchoCanceler.create(sid)?.also { it.enabled = true }
-                Log.i(TAG, "AEC enabled: ${aec != null}")
-            } else {
-                Log.w(TAG, "AEC not available on this device")
-            }
-            if (NoiseSuppressor.isAvailable()) {
-                noiseSuppressor = NoiseSuppressor.create(sid)?.also { it.enabled = true }
-                Log.i(TAG, "NoiseSuppressor enabled: ${noiseSuppressor != null}")
-            }
+        webSocket?.let { ws ->
+            caeAudio.start(ws)
+            Log.i(TAG, "CAE beamformed audio capture started")
         }
-
-        audioThread = Thread {
-            val buffer = ByteArray(bufferSize)
-            while (isStreaming.get()) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read > 0) {
-                    val frame = ByteArray(1 + read)
-                    frame[0] = AUDIO_TYPE
-                    System.arraycopy(buffer, 0, frame, 1, read)
-                    webSocket?.send(frame.toByteString(0, frame.size))
-                }
-            }
-        }.also { it.start() }
     }
 
     private fun stopAudioCapture() {
-        audioThread?.interrupt()
-        audioThread = null
-        aec?.release(); aec = null
-        noiseSuppressor?.release(); noiseSuppressor = null
-        try {
-            audioRecord?.stop()
-            audioRecord?.release()
-        } catch (_: Exception) {}
-        audioRecord = null
+        caeAudio.stop()
     }
 
     // ═══════════════════════════════════════════════════════════════
