@@ -243,7 +243,6 @@ class CaeAudioManager(private val context: Context) {
      * Send beamformed audio over WebSocket with 0x01 type prefix
      */
     private fun sendAudio(audioData: ByteArray, dataLen: Int) {
-        if (isMuted) return  // Skip during TTS playback to prevent echo
         try {
             val frame = ByteArray(1 + dataLen)
             frame[0] = AUDIO_TYPE
@@ -269,11 +268,6 @@ class CaeAudioManager(private val context: Context) {
             Log.e(TAG, "Send DOA error", e)
         }
     }
-
-    /**
-     * Mute/unmute audio sending (use during TTS to prevent echo)
-     */
-    var isMuted = false
 
     /**
      * Send CAE status to PC server for logging
