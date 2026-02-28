@@ -120,6 +120,22 @@ class CaeAudioManager(private val context: Context) {
 
             caeCoreHelper = CaeCoreHelper(caeListener, false) // false = not 2-mic mode
 
+            // Kill audioserver to release the ALSA device — it auto-restarts
+            // but by then we already hold the lock
+            try {
+                val process = Runtime.getRuntime().exec(arrayOf("su", "0", "sh", "-c",
+                    "pid=\$(cat /proc/*/cmdline 2>/dev/null | tr '\\0' '\\n' | grep -n audioserver | head -1 | cut -d: -f1); " +
+                    "for p in /proc/[0-9]*/cmdline; do " +
+                    "if tr '\\0' ' ' < \$p 2>/dev/null | grep -q audioserver; then " +
+                    "kill \$(echo \$p | grep -o '[0-9]*'); fi; done"
+                ))
+                process.waitFor()
+                Thread.sleep(500) // Wait for audioserver to die and release the device
+                Log.i(TAG, "Killed audioserver to release ALSA device")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not kill audioserver: ${e.message}")
+            }
+
             // Create ALSA recorder instance for USB mic array
             alsaRecorder = AlsaRecorder.createInstance(
                 PCM_CARD,
