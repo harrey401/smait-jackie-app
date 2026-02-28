@@ -153,6 +153,8 @@ class CaeAudioManager(private val context: Context) {
             if (result == 0) {
                 isRunning.set(true)
                 Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz)")
+                // Report CAE status to PC server
+                sendCaeStatus(true)
             } else {
                 Log.e(TAG, "ALSA recording failed to start: $result")
                 cleanup()
@@ -241,6 +243,7 @@ class CaeAudioManager(private val context: Context) {
      * Send beamformed audio over WebSocket with 0x01 type prefix
      */
     private fun sendAudio(audioData: ByteArray, dataLen: Int) {
+        if (isMuted) return  // Skip during TTS playback to prevent echo
         try {
             val frame = ByteArray(1 + dataLen)
             frame[0] = AUDIO_TYPE
@@ -264,6 +267,28 @@ class CaeAudioManager(private val context: Context) {
             webSocket?.send(frame.toByteString(0, frame.size))
         } catch (e: Exception) {
             Log.e(TAG, "Send DOA error", e)
+        }
+    }
+
+    /**
+     * Mute/unmute audio sending (use during TTS to prevent echo)
+     */
+    var isMuted = false
+
+    /**
+     * Send CAE status to PC server for logging
+     */
+    private fun sendCaeStatus(active: Boolean) {
+        try {
+            val json = org.json.JSONObject().apply {
+                put("type", "cae_status")
+                put("aec", active)
+                put("beamforming", active)
+                put("noise_suppression", active)
+            }
+            webSocket?.send(json.toString())
+        } catch (e: Exception) {
+            Log.e(TAG, "Send CAE status error", e)
         }
     }
 

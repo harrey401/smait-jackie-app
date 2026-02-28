@@ -858,7 +858,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun speakText(text: String) {
+        // Mute mic during TTS to prevent robot hearing itself
+        if (::caeAudio.isInitialized) caeAudio.isMuted = true
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_${System.currentTimeMillis()}")
+        // Set utterance listener to unmute when TTS finishes
+        tts?.setOnUtteranceProgressListener(object : android.speech.tts.UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onDone(utteranceId: String?) {
+                if (::caeAudio.isInitialized) caeAudio.isMuted = false
+            }
+            @Deprecated("Deprecated") override fun onError(utteranceId: String?) {
+                if (::caeAudio.isInitialized) caeAudio.isMuted = false
+            }
+        })
     }
 
     // ═══════════════════════════════════════════════════════════════
