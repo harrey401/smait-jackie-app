@@ -102,6 +102,10 @@ class CaeAudioManager(private val context: Context) {
             // Initialize CAE engine with our listener
             val caeListener = object : OnCaeOperatorlistener {
                 override fun onAudio(audioData: ByteArray, dataLen: Int) {
+                    caeCallbackCount++
+                    if (caeCallbackCount % 100 == 0L) {
+                        Log.i(TAG, "CAE onAudio #$caeCallbackCount: $dataLen bytes")
+                    }
                     // This is the beamformed, noise-suppressed mono audio
                     // Send directly over WebSocket
                     if (isRunning.get()) {
@@ -153,7 +157,14 @@ class CaeAudioManager(private val context: Context) {
     /**
      * ALSA PCM listener — receives raw 8-channel audio, adapts to CAE format
      */
+    private var pcmFrameCount = 0L
+    private var caeCallbackCount = 0L
+
     private val pcmListener = AlsaRecorder.PcmListener { bytes, length ->
+        pcmFrameCount++
+        if (pcmFrameCount % 100 == 0L) {
+            Log.i(TAG, "PCM read #$pcmFrameCount: ${bytes.size} bytes")
+        }
         // Jackie: 8ch 16-bit → adapt to 6ch 32-bit with channel IDs for CAE engine
         val adapted = adapt8ch16bitTo6ch32bit(bytes)
         caeCoreHelper?.writeAudio(adapted)
