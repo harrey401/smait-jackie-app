@@ -123,6 +123,9 @@ class CaeAudioManager(private val context: Context) {
             }
 
             caeCoreHelper = CaeCoreHelper(caeListener, false) // false = not 2-mic mode
+            // Force beam 0 on startup for continuous audio output
+            // (default -1 means "wait for wake word" which blocks onAudioCallback)
+            com.iflytek.iflyos.cae.CAE.CAESetRealBeam(0)
 
             // Create ALSA recorder instance for USB mic array
             alsaRecorder = AlsaRecorder.createInstance(
