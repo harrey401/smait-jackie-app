@@ -203,12 +203,13 @@ class CaeAudioManager(private val context: Context) {
             for (ch in 0 until 6) {
                 val sOff = inOff + srcOffsets[ch]
                 val dOff = outOff + ch * 4
-                // 32-bit LE: [byte0, byte1, byte2, byte3] = value as little-endian
-                // Left-shift 16-bit sample by 16: low 2 bytes are 0, high 2 bytes are the sample
-                output[dOff + 0] = 0x00
-                output[dOff + 1] = 0x00
-                output[dOff + 2] = data[sOff + 0]  // sample low byte
-                output[dOff + 3] = data[sOff + 1]  // sample high byte
+                // 32-bit LE sign-extension: 16-bit [lo, hi] → 32-bit [lo, hi, sign, sign]
+                // Sign byte = 0xFF if negative (hi bit set), 0x00 if positive
+                val sign: Byte = if (data[sOff + 1].toInt() < 0) 0xFF.toByte() else 0x00
+                output[dOff + 0] = data[sOff + 0]  // sample low byte
+                output[dOff + 1] = data[sOff + 1]  // sample high byte
+                output[dOff + 2] = sign
+                output[dOff + 3] = sign
             }
         }
 
