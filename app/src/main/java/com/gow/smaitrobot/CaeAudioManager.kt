@@ -166,7 +166,18 @@ class CaeAudioManager(private val context: Context) {
     private val pcmListener = AlsaRecorder.PcmListener { bytes, length ->
         pcmFrameCount++
         if (pcmFrameCount % 100 == 0L) {
-            Log.i(TAG, "PCM read #$pcmFrameCount: ${bytes.size} bytes")
+            // Log raw PCM values per channel for first frame in this batch
+            // 8ch x 2 bytes = 16 bytes per frame
+            if (bytes.size >= 16) {
+                val sb = StringBuilder("PCM read #$pcmFrameCount: ${bytes.size}B | ch vals:")
+                for (ch in 0 until 8) {
+                    val lo = bytes[ch * 2].toInt() and 0xFF
+                    val hi = bytes[ch * 2 + 1].toInt()
+                    val sample = (hi shl 8) or lo
+                    sb.append(" ch$ch=$sample")
+                }
+                Log.i(TAG, sb.toString())
+            }
         }
         // Try feeding raw 8ch 16-bit directly — SDK may handle channel selection internally
         caeCoreHelper?.writeAudio(bytes)
