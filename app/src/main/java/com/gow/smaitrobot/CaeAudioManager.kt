@@ -104,13 +104,10 @@ class CaeAudioManager(private val context: Context) {
                 override fun onAudio(audioData: ByteArray, dataLen: Int) {
                     caeCallbackCount++
                     if (caeCallbackCount % 100 == 0L) {
-                        Log.i(TAG, "CAE onAudio #$caeCallbackCount: $dataLen bytes")
+                        Log.i(TAG, "CAE onAudio #$caeCallbackCount: $dataLen bytes (not used — bypassed)")
                     }
-                    // This is the beamformed, noise-suppressed mono audio
-                    // Send directly over WebSocket
-                    if (isRunning.get()) {
-                        sendAudio(audioData, dataLen)
-                    }
+                    // Audio is now sent directly from pcmListener with gain
+                    // CAE output not used until we fix the format
                 }
 
                 override fun onWakeup(angle: Int, beam: Int) {
@@ -179,7 +176,22 @@ class CaeAudioManager(private val context: Context) {
                 Log.i(TAG, sb.toString())
             }
         }
-        // 8ch 16-bit → 6ch 32-bit (left-shift) for CAE engine
+        // BYPASS CAE: extract ch0 mono, apply 16x gain, send directly to WebSocket
+        // ALSA raw has no AGC — mic values are ±200-700, need amplification
+        val framesCount = bytes.size / 16  // 8ch * 2 bytes per frame
+        val mono = ByteArray(framesCount * 2)
+        for (j in 0 until framesCount) {
+            val lo = bytes[j * 16].toInt() and 0xFF
+            val hi = bytes[j * 16 + 1].toInt()
+            var sample = ((hi shl 8) or lo) * 16  // 16x gain
+            // Clamp to int16 range
+            if (sample > 32767) sample = 32767
+            if (sample < -32768) sample = -32768
+            mono[j * 2] = (sample and 0xFF).toByte()
+            mono[j * 2 + 1] = ((sample shr 8) and 0xFF).toByte()
+        }
+        sendAudio(mono, mono.size)
+        // Still feed CAE in background for DOA (optional)
         val adapted = adapt8ch16bitTo6ch32bit(bytes)
         caeCoreHelper?.writeAudio(adapted)
     }
