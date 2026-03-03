@@ -308,6 +308,42 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<android.widget.LinearLayout>(R.id.configSheet).setOnClickListener { /* consume */ }
 
+        // VAD slider (range 0.3–0.9)
+        val vadSeekBar = findViewById<android.widget.SeekBar>(R.id.vadSeekBar)
+        val vadLabel = findViewById<TextView>(R.id.vadLabel)
+        vadSeekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 0.3f + progress / 100f
+                vadLabel.text = "Noise Sensitivity (VAD): %.2f".format(value)
+            }
+            override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
+        })
+
+        // ASD slider (range 0.10–0.50)
+        val asdSeekBar = findViewById<android.widget.SeekBar>(R.id.asdSeekBar)
+        val asdLabel = findViewById<TextView>(R.id.asdLabel)
+        asdSeekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 0.10f + progress * 0.05f
+                asdLabel.text = "Speaker Strictness (ASD): %.2f".format(value)
+            }
+            override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
+        })
+
+        // Timeout slider (range 10–60s)
+        val timeoutSeekBar = findViewById<android.widget.SeekBar>(R.id.timeoutSeekBar)
+        val timeoutLabel = findViewById<TextView>(R.id.timeoutLabel)
+        timeoutSeekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                val value = 10 + progress
+                timeoutLabel.text = "Session Timeout: ${value}s"
+            }
+            override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(sb: android.widget.SeekBar?) {}
+        })
+
         // Volume slider
         ttsVolume = prefs.getFloat("tts_volume", 0.5f)
         val volumeSeekBar = findViewById<android.widget.SeekBar>(R.id.volumeSeekBar)
@@ -326,7 +362,22 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        // Apply button — sends config to server + saves volume
         findViewById<MaterialButton>(R.id.configApplyButton).setOnClickListener {
+            val vadValue = 0.3f + vadSeekBar.progress / 100f
+            val asdValue = 0.10f + asdSeekBar.progress * 0.05f
+            val timeoutValue = 10 + timeoutSeekBar.progress
+
+            val json = org.json.JSONObject().apply {
+                put("type", "config")
+                put("vad_threshold", vadValue.toDouble())
+                put("asd_min_score", asdValue.toDouble())
+                put("session_timeout", timeoutValue)
+            }
+            webSocket?.send(json.toString())
+            Log.i(TAG, "Config sent: $json")
+
+            prefs.edit().putFloat("tts_volume", ttsVolume).apply()
             findViewById<FrameLayout>(R.id.configOverlay).visibility = View.GONE
         }
 
