@@ -179,8 +179,9 @@ class CaeAudioManager(private val context: Context) {
                 Log.i(TAG, sb.toString())
             }
         }
-        // Try feeding raw 8ch 16-bit directly — SDK may handle channel selection internally
-        caeCoreHelper?.writeAudio(bytes)
+        // 8ch 16-bit → 6ch 32-bit (left-shift) for CAE engine
+        val adapted = adapt8ch16bitTo6ch32bit(bytes)
+        caeCoreHelper?.writeAudio(adapted)
     }
 
     /**
@@ -201,19 +202,23 @@ class CaeAudioManager(private val context: Context) {
      */
     private fun adapt8ch16bitTo6ch32bit(data: ByteArray): ByteArray {
         val framesCount = data.size / 16  // 16 bytes per 8ch frame
-        val output = ByteArray(framesCount * 12) // 12 bytes per 6ch frame (16-bit)
+        val output = ByteArray(framesCount * 24) // 24 bytes per 6ch 32-bit frame
 
         val srcOffsets = intArrayOf(0, 2, 4, 6, 12, 14)
 
         for (j in 0 until framesCount) {
             val inOff = j * 16
-            val outOff = j * 12
+            val outOff = j * 24
 
             for (ch in 0 until 6) {
                 val sOff = inOff + srcOffsets[ch]
-                val dOff = outOff + ch * 2
-                output[dOff + 0] = data[sOff + 0]
-                output[dOff + 1] = data[sOff + 1]
+                val dOff = outOff + ch * 4
+                // Left-shift: 16-bit sample into upper 16 bits of 32-bit LE word
+                // [0x00, 0x00, sample_lo, sample_hi]
+                output[dOff + 0] = 0x00
+                output[dOff + 1] = 0x00
+                output[dOff + 2] = data[sOff + 0]
+                output[dOff + 3] = data[sOff + 1]
             }
         }
 
