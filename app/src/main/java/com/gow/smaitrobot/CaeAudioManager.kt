@@ -165,7 +165,7 @@ class CaeAudioManager(private val context: Context) {
         if (pcmFrameCount % 100 == 0L) {
             Log.i(TAG, "PCM read #$pcmFrameCount: ${bytes.size} bytes")
         }
-        // Jackie: 8ch 16-bit → adapt to 6ch 32-bit with channel IDs for CAE engine
+        // Jackie: 8ch 16-bit → adapt to 6ch 32-bit interleaved (no channel IDs) for CAE engine
         val adapted = adapt8ch16bitTo6ch32bit(bytes)
         caeCoreHelper?.writeAudio(adapted)
     }
@@ -173,62 +173,43 @@ class CaeAudioManager(private val context: Context) {
     /**
      * Adapt 8-channel 16-bit PCM to 6-channel 32-bit format expected by CAE engine.
      *
-     * Input:  8 channels × 2 bytes = 16 bytes per frame
-     * Output: 6 channels × 4 bytes = 24 bytes per frame
+     * Input:  8 channels × 2 bytes = 16 bytes per frame (interleaved S16_LE)
+     * Output: 6 channels × 4 bytes = 24 bytes per frame (interleaved S32_LE)
      *
      * Channel mapping (USB Audio → CAE):
-     *   Ch 0 (FL)  → Mic 1 (with channel ID 0x01)
-     *   Ch 1 (FR)  → Mic 2 (with channel ID 0x02)
-     *   Ch 2 (FC)  → Mic 3 (with channel ID 0x03)
-     *   Ch 3 (LFE) → Mic 4 (with channel ID 0x04)
-     *   Ch 6 (FLC) → Ref 1 (with channel ID 0x05)
-     *   Ch 7 (FRC) → Ref 2 (with channel ID 0x06)
+     *   Ch 0 (FL)  → Mic 1  (position 0)
+     *   Ch 1 (FR)  → Mic 2  (position 1)
+     *   Ch 2 (FC)  → Mic 3  (position 2)
+     *   Ch 3 (LFE) → Mic 4  (position 3)
+     *   Ch 6 (FLC) → Ref 1  (position 4)
+     *   Ch 7 (FRC) → Ref 2  (position 5)
      *
-     * Each output sample: [0x00, channel_id, sample_low, sample_high]
+     * 16-bit → 32-bit conversion: left-shift by 16 (standard bit-depth promotion).
+     * In LE bytes: 16-bit [lo, hi] → 32-bit [0x00, 0x00, lo, hi]
+     * No channel IDs — CAE identifies channels by interleaved position.
      */
     private fun adapt8ch16bitTo6ch32bit(data: ByteArray): ByteArray {
         val framesCount = data.size / 16  // 16 bytes per 8ch frame
         val output = ByteArray(framesCount * 24) // 24 bytes per 6ch frame
 
+        // Source channel byte offsets within a 16-byte input frame (each ch = 2 bytes)
+        // Ch0=0, Ch1=2, Ch2=4, Ch3=6, Ch6=12, Ch7=14
+        val srcOffsets = intArrayOf(0, 2, 4, 6, 12, 14)
+
         for (j in 0 until framesCount) {
-            val inOff = j * 16   // input offset
-            val outOff = j * 24  // output offset
+            val inOff = j * 16
+            val outOff = j * 24
 
-            // Mic 1 (Ch 0 - FL) — format: [pcm_low, pcm_high, channel_id, 0x00]
-            output[outOff + 0] = data[inOff + 0]
-            output[outOff + 1] = data[inOff + 1]
-            output[outOff + 2] = 0x01
-            output[outOff + 3] = 0x00
-
-            // Mic 2 (Ch 1 - FR)
-            output[outOff + 4] = data[inOff + 2]
-            output[outOff + 5] = data[inOff + 3]
-            output[outOff + 6] = 0x02
-            output[outOff + 7] = 0x00
-
-            // Mic 3 (Ch 2 - FC)
-            output[outOff + 8] = data[inOff + 4]
-            output[outOff + 9] = data[inOff + 5]
-            output[outOff + 10] = 0x03
-            output[outOff + 11] = 0x00
-
-            // Mic 4 (Ch 3 - LFE)
-            output[outOff + 12] = data[inOff + 6]
-            output[outOff + 13] = data[inOff + 7]
-            output[outOff + 14] = 0x04
-            output[outOff + 15] = 0x00
-
-            // Ref 1 (Ch 6 - FLC)
-            output[outOff + 16] = data[inOff + 12]
-            output[outOff + 17] = data[inOff + 13]
-            output[outOff + 18] = 0x05
-            output[outOff + 19] = 0x00
-
-            // Ref 2 (Ch 7 - FRC)
-            output[outOff + 20] = data[inOff + 14]
-            output[outOff + 21] = data[inOff + 15]
-            output[outOff + 22] = 0x06
-            output[outOff + 23] = 0x00
+            for (ch in 0 until 6) {
+                val sOff = inOff + srcOffsets[ch]
+                val dOff = outOff + ch * 4
+                // 32-bit LE: [byte0, byte1, byte2, byte3] = value as little-endian
+                // Left-shift 16-bit sample by 16: low 2 bytes are 0, high 2 bytes are the sample
+                output[dOff + 0] = 0x00
+                output[dOff + 1] = 0x00
+                output[dOff + 2] = data[sOff + 0]  // sample low byte
+                output[dOff + 3] = data[sOff + 1]  // sample high byte
+            }
         }
 
         return output
