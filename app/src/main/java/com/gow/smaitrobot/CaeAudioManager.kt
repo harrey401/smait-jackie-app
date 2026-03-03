@@ -168,9 +168,8 @@ class CaeAudioManager(private val context: Context) {
         if (pcmFrameCount % 100 == 0L) {
             Log.i(TAG, "PCM read #$pcmFrameCount: ${bytes.size} bytes")
         }
-        // Jackie: 8ch 16-bit → adapt to 6ch 32-bit interleaved (no channel IDs) for CAE engine
-        val adapted = adapt8ch16bitTo6ch32bit(bytes)
-        caeCoreHelper?.writeAudio(adapted)
+        // Try feeding raw 8ch 16-bit directly — SDK may handle channel selection internally
+        caeCoreHelper?.writeAudio(bytes)
     }
 
     /**
