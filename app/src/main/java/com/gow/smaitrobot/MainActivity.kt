@@ -22,11 +22,8 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.AudioFormat
-import android.media.AudioRecord
 import android.media.Image
 import android.media.ImageReader
-import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
@@ -76,12 +73,8 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "Jackie"
         private const val PERMISSION_REQUEST_CODE = 100
-        private const val SAMPLE_RATE = 16000
-        private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
-        private const val AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT
         private const val INITIAL_RECONNECT_DELAY_MS = 1000L
         private const val MAX_RECONNECT_DELAY_MS = 30000L
-        private const val AUDIO_TYPE: Byte = 0x01
         private const val VIDEO_TYPE: Byte = 0x02
     }
 
@@ -152,8 +145,7 @@ class MainActivity : AppCompatActivity() {
     private var lastJpegBytes: ByteArray? = null
 
     // ─── Audio ───
-    private var audioRecord: AudioRecord? = null
-    private var audioThread: Thread? = null
+    private var caeAudioManager: CaeAudioManager? = null
 
     // ─── TTS ───
     private var tts: TextToSpeech? = null
@@ -213,6 +205,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         prefs = getSharedPreferences("jackie_prefs", Context.MODE_PRIVATE)
+        CaeAudioManager(this).copyAssetsIfNeeded()
         initUI()
         ttsAudioPlayer = TtsAudioPlayer().also {
             it.start()
@@ -1012,40 +1005,16 @@ class MainActivity : AppCompatActivity() {
     // ═══════════════════════════════════════════════════════════════
 
     private fun startAudioCapture() {
-        val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT)
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) return
-
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_COMMUNICATION, // enables hardware AEC (echo cancel)
-            SAMPLE_RATE,
-            CHANNEL_CONFIG,
-            AUDIO_FORMAT,
-            bufferSize * 2
-        )
-        audioRecord?.startRecording()
-
-        audioThread = Thread {
-            val buffer = ByteArray(bufferSize)
-            while (isStreaming.get()) {
-                val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
-                if (read > 0 && !isSpeaking.get()) {
-                    val frame = ByteArray(1 + read)
-                    frame[0] = AUDIO_TYPE
-                    System.arraycopy(buffer, 0, frame, 1, read)
-                    webSocket?.send(frame.toByteString(0, frame.size))
-                }
-            }
-        }.also { it.start() }
+        // Use CAE beamforming SDK instead of AudioRecord.
+        // CaeAudioManager sends dual streams: 0x01 (CAE beamformed) + 0x03 (raw 4ch).
+        // isSpeaking mic gating removed — server has software AEC (Phase 5).
+        caeAudioManager = CaeAudioManager(this)
+        caeAudioManager!!.start(webSocket!!)
     }
 
     private fun stopAudioCapture() {
-        audioThread?.interrupt()
-        audioThread = null
-        try {
-            audioRecord?.stop()
-            audioRecord?.release()
-        } catch (_: Exception) {}
-        audioRecord = null
+        caeAudioManager?.stop()
+        caeAudioManager = null
     }
 
     // ═══════════════════════════════════════════════════════════════
