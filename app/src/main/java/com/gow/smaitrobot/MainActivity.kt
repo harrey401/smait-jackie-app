@@ -159,6 +159,7 @@ class MainActivity : AppCompatActivity() {
     private var tts: TextToSpeech? = null
     private var ttsVolume: Float = 0.5f  // 0.0 = mute, 1.0 = max
     private val isSpeaking = AtomicBoolean(false)  // true while TTS is playing
+    private var ttsAudioPlayer: TtsAudioPlayer? = null  // AudioTrack-based PCM16 player for 0x05 frames
 
     // ─── Prefs ───
     private lateinit var prefs: SharedPreferences
@@ -213,6 +214,10 @@ class MainActivity : AppCompatActivity() {
 
         prefs = getSharedPreferences("jackie_prefs", Context.MODE_PRIVATE)
         initUI()
+        ttsAudioPlayer = TtsAudioPlayer().also {
+            it.start()
+            it.setVolume(ttsVolume)
+        }
         initTTS()
         initChat()
         checkPermissions()
@@ -354,6 +359,7 @@ class MainActivity : AppCompatActivity() {
         volumeSeekBar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
                 ttsVolume = progress / 100f
+                ttsAudioPlayer?.setVolume(ttsVolume)
                 volumeLabel.text = "Speaker Volume: ${progress}%"
             }
             override fun onStartTrackingTouch(sb: android.widget.SeekBar?) {}
@@ -1091,6 +1097,21 @@ class MainActivity : AppCompatActivity() {
                 handleServerMessage(text)
             }
 
+            override fun onMessage(ws: WebSocket, bytes: okio.ByteString) {
+                val data = bytes.toByteArray()
+                if (data.isEmpty()) return
+                when (data[0]) {
+                    0x05.toByte() -> {
+                        // TTS_AUDIO: first 0x05 frame signals TTS has started
+                        if (!isSpeaking.getAndSet(true)) {
+                            Log.i(TAG, "TTS audio stream started (0x05)")
+                        }
+                        ttsAudioPlayer?.handleBinaryFrame(data)
+                    }
+                    else -> Log.v(TAG, "Unknown binary frame: 0x${data[0].toUByte().toString(16)}")
+                }
+            }
+
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                 Log.e(TAG, "WebSocket failed: ${t.message}")
                 onDisconnected()
@@ -1129,6 +1150,9 @@ class MainActivity : AppCompatActivity() {
         webSocket?.close(1000, "User stopped")
         webSocket = null
         stopAudioCapture()
+        ttsAudioPlayer?.release()
+        ttsAudioPlayer = null
+        isSpeaking.set(false)
         updateConnectionDot(false)
     }
 
@@ -1172,6 +1196,14 @@ class MainActivity : AppCompatActivity() {
                 "take_photo" -> {
                     if (currentState == AppState.ENGAGED) {
                         runOnUiThread { startSelfieCountdown() }
+                    }
+                }
+                "tts_control" -> {
+                    val action = json.optString("action", "")
+                    if (action == "end") {
+                        ttsAudioPlayer?.stop()
+                        isSpeaking.set(false)
+                        Log.i(TAG, "TTS audio stream ended (tts_control:end)")
                     }
                 }
                 "response" -> {
