@@ -907,8 +907,7 @@ class MainActivity : AppCompatActivity() {
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
 
-            // Use JPEG format — more reliable with external USB cameras than YUV_420_888
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 2)
+            imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)
             imageReader?.setOnImageAvailableListener({ reader ->
                 val image = reader.acquireLatestImage()
                 image?.let {
@@ -937,12 +936,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var dummySurfaceTexture: SurfaceTexture? = null
+
     @Suppress("DEPRECATION")
     private fun createCaptureSession() {
         try {
             val surfaces = mutableListOf<Surface>()
 
-            // Add preview surface only if TextureView is available (it may be GONE on idle screen)
+            // Add preview surface — some camera HALs (especially external USB on RK3588)
+            // require a preview-type surface to deliver frames at all.
             var previewSurface: Surface? = null
             val texture = cameraPreview.surfaceTexture
             if (texture != null) {
@@ -950,7 +952,14 @@ class MainActivity : AppCompatActivity() {
                 previewSurface = Surface(texture)
                 surfaces.add(previewSurface)
             } else {
-                Log.i(TAG, "Camera preview not visible — using ImageReader-only capture (streaming mode)")
+                // TextureView not visible — create a dummy SurfaceTexture as preview stand-in.
+                // External camera HALs on RK3588 may refuse to stream without a preview surface.
+                Log.i(TAG, "TextureView not available — creating dummy SurfaceTexture for HAL compatibility")
+                val dummy = SurfaceTexture(0)
+                dummy.setDefaultBufferSize(640, 480)
+                dummySurfaceTexture = dummy
+                previewSurface = Surface(dummy)
+                surfaces.add(previewSurface)
             }
 
             // Always capture to ImageReader for WebSocket streaming
@@ -976,9 +985,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun processVideoFrame(image: Image) {
         try {
-            val buffer = image.planes[0].buffer
-            val jpegBytes = ByteArray(buffer.remaining())
-            buffer.get(jpegBytes)
+            // Convert YUV_420_888 → NV21 → JPEG
+            val width = image.width
+            val height = image.height
+            val yBuffer = image.planes[0].buffer
+            val uBuffer = image.planes[1].buffer
+            val vBuffer = image.planes[2].buffer
+
+            val ySize = yBuffer.remaining()
+            val uSize = uBuffer.remaining()
+            val vSize = vBuffer.remaining()
+
+            val nv21 = ByteArray(ySize + uSize + vSize)
+            yBuffer.get(nv21, 0, ySize)
+            vBuffer.get(nv21, ySize, vSize)
+            uBuffer.get(nv21, ySize + vSize, uSize)
+
+            val yuvImage = android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, width, height, null)
+            val out = java.io.ByteArrayOutputStream()
+            yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 70, out)
+            val jpegBytes = out.toByteArray()
 
             lastJpegBytes = jpegBytes
 
@@ -1361,6 +1387,8 @@ class MainActivity : AppCompatActivity() {
         captureSession?.close()
         cameraDevice?.close()
         imageReader?.close()
+        dummySurfaceTexture?.release()
+        dummySurfaceTexture = null
         cameraThread.quitSafely()
         animators.forEach { it.cancel() }
         particleAnimator?.cancel()
