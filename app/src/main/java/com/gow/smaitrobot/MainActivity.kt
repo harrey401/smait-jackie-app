@@ -894,14 +894,21 @@ class MainActivity : AppCompatActivity() {
     private fun openCamera() {
         val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
         try {
+            // Prefer EXTERNAL (Jackie's USB camera), then FRONT, then first available
             val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
+                val chars = cameraManager.getCameraCharacteristics(id)
+                chars.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_EXTERNAL
+            } ?: cameraManager.cameraIdList.firstOrNull { id ->
                 val chars = cameraManager.getCameraCharacteristics(id)
                 chars.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
             } ?: cameraManager.cameraIdList[0]
 
+            Log.i(TAG, "Opening camera ID=$cameraId facing=${cameraManager.getCameraCharacteristics(cameraId).get(CameraCharacteristics.LENS_FACING)}")
+
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
 
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)
+            // Use JPEG format — more reliable with external USB cameras than YUV_420_888
+            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 2)
             imageReader?.setOnImageAvailableListener({ reader ->
                 val image = reader.acquireLatestImage()
                 image?.let {
@@ -969,23 +976,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun processVideoFrame(image: Image) {
         try {
-            val yBuffer = image.planes[0].buffer
-            val uBuffer = image.planes[1].buffer
-            val vBuffer = image.planes[2].buffer
-
-            val ySize = yBuffer.remaining()
-            val uSize = uBuffer.remaining()
-            val vSize = vBuffer.remaining()
-
-            val nv21 = ByteArray(ySize + uSize + vSize)
-            yBuffer.get(nv21, 0, ySize)
-            vBuffer.get(nv21, ySize, vSize)
-            uBuffer.get(nv21, ySize + vSize, uSize)
-
-            val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
-            val out = ByteArrayOutputStream()
-            yuvImage.compressToJpeg(Rect(0, 0, image.width, image.height), 75, out)
-            val jpegBytes = out.toByteArray()
+            val buffer = image.planes[0].buffer
+            val jpegBytes = ByteArray(buffer.remaining())
+            buffer.get(jpegBytes)
 
             lastJpegBytes = jpegBytes
 
