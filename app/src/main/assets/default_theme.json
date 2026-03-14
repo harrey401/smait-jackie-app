@@ -1,0 +1,36 @@
+{
+  "eventName": "SMAIT Robot",
+  "tagline": "Your Intelligent Campus Guide",
+  "logoAsset": "smait_logo.png",
+  "colors": {
+    "primary": "#1565C0",
+    "secondary": "#546E7A",
+    "tertiary": "#78909C",
+    "background": "#F5F5F5",
+    "onPrimary": "#FFFFFF",
+    "onBackground": "#212121",
+    "surface": "#FFFFFF",
+    "onSurface": "#212121"
+  },
+  "fonts": {
+    "bodyFont": "Roboto",
+    "headingFont": "Roboto"
+  },
+  "cards": [
+    {
+      "label": "Ask Me Anything",
+      "action": "navigate:chat",
+      "icon": "ic_chat",
+      "description": "Chat with your AI campus guide."
+    },
+    {
+      "label": "Guided Tour",
+      "action": "navigate:map",
+      "icon": "ic_map",
+      "description": "Get guided to any location on campus."
+    }
+  ],
+  "sponsors": [],
+  "schedule": [],
+  "speakers": []
+}
