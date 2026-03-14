@@ -19,12 +19,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.gow.smaitrobot.data.model.ThemeConfig
+import com.gow.smaitrobot.jackieApp
+import com.gow.smaitrobot.ui.eventinfo.EventInfoScreen
+import com.gow.smaitrobot.ui.eventinfo.EventInfoViewModel
+import com.gow.smaitrobot.ui.facilities.FacilitiesScreen
+import com.gow.smaitrobot.ui.facilities.FacilitiesViewModel
+import com.gow.smaitrobot.ui.home.HomeScreen
+import com.gow.smaitrobot.ui.home.HomeViewModel
+import com.gow.smaitrobot.ui.navigation_map.NavigationMapScreen
+import com.gow.smaitrobot.ui.navigation_map.NavigationMapViewModel
 
 /**
  * Root Composable that provides the 5-tab bottom navigation scaffold and NavHost.
@@ -47,6 +58,31 @@ fun AppScaffold(
     navController: NavHostController,
     themeConfig: ThemeConfig
 ) {
+    val context = LocalContext.current
+    val wsRepo = context.jackieApp.webSocketRepository
+    val themeRepo = context.jackieApp.themeRepository
+
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.Factory {
+            HomeViewModel(themeRepo)
+        }
+    )
+    val eventInfoViewModel: EventInfoViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.Factory {
+            EventInfoViewModel(themeRepo)
+        }
+    )
+    val navMapViewModel: NavigationMapViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.Factory {
+            NavigationMapViewModel(wsRepo)
+        }
+    )
+    val facilitiesViewModel: FacilitiesViewModel = viewModel(
+        factory = androidx.lifecycle.ViewModelProvider.Factory {
+            FacilitiesViewModel(wsRepo)
+        }
+    )
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
@@ -87,19 +123,19 @@ fun AppScaffold(
             modifier = Modifier.padding(paddingValues)
         ) {
             composable<Screen.Home> {
-                PlaceholderScreen("Home")
+                HomeScreen(viewModel = homeViewModel, navController = navController)
             }
             composable<Screen.Chat> {
                 PlaceholderScreen("Chat")
             }
             composable<Screen.Map> {
-                PlaceholderScreen("Map")
+                NavigationMapScreen(viewModel = navMapViewModel)
             }
             composable<Screen.Facilities> {
-                PlaceholderScreen("Facilities")
+                FacilitiesScreen(viewModel = facilitiesViewModel)
             }
             composable<Screen.EventInfo> {
-                PlaceholderScreen("Event Info")
+                EventInfoScreen(viewModel = eventInfoViewModel)
             }
         }
     }

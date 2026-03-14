@@ -9,10 +9,16 @@ import com.gow.smaitrobot.data.theme.ThemeRepository
 import com.gow.smaitrobot.ui.home.CardAction
 import com.gow.smaitrobot.ui.home.HomeViewModel
 import com.gow.smaitrobot.navigation.Screen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -29,6 +35,9 @@ import org.mockito.kotlin.whenever
  */
 @ExperimentalCoroutinesApi
 class HomeViewModelTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
 
     private lateinit var mockThemeRepository: ThemeRepository
     private lateinit var configFlow: MutableStateFlow<ThemeConfig>
@@ -54,15 +63,23 @@ class HomeViewModelTest {
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         configFlow = MutableStateFlow(wie2026Config)
         mockThemeRepository = mock()
         whenever(mockThemeRepository.config).thenReturn(configFlow)
     }
 
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun createViewModel(): HomeViewModel = HomeViewModel(mockThemeRepository, testScope)
+
     // Test 1: HomeViewModel.cards returns cards from ThemeConfig (6 cards for WiE)
     @Test
-    fun `cards returns all cards from ThemeConfig`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `cards returns all cards from ThemeConfig`() = testScope.runTest {
+        val viewModel = createViewModel()
         val cards = viewModel.cards.first()
 
         assertEquals(6, cards.size)
@@ -74,8 +91,8 @@ class HomeViewModelTest {
 
     // Test 2: HomeViewModel.eventName returns ThemeConfig.eventName
     @Test
-    fun `eventName returns ThemeConfig eventName`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `eventName returns ThemeConfig eventName`() = testScope.runTest {
+        val viewModel = createViewModel()
         val eventName = viewModel.eventName.first()
 
         assertEquals("WiE 2026", eventName)
@@ -83,8 +100,8 @@ class HomeViewModelTest {
 
     // Test 3: HomeViewModel.sponsors returns ThemeConfig.sponsors list
     @Test
-    fun `sponsors returns ThemeConfig sponsors list`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `sponsors returns ThemeConfig sponsors list`() = testScope.runTest {
+        val viewModel = createViewModel()
         val sponsors = viewModel.sponsors.first()
 
         assertEquals(2, sponsors.size)
@@ -94,8 +111,8 @@ class HomeViewModelTest {
 
     // Test 4: parseCardAction("navigate:chat") returns NavigateToTab(Screen.Chat)
     @Test
-    fun `parseCardAction navigate chat returns NavigateToTab Chat`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction navigate chat returns NavigateToTab Chat`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("navigate:chat")
 
         assertTrue(action is CardAction.NavigateToTab)
@@ -105,8 +122,8 @@ class HomeViewModelTest {
 
     // Test 5: parseCardAction("inline:keynote") returns ShowInlineContent("keynote")
     @Test
-    fun `parseCardAction inline keynote returns ShowInlineContent keynote`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction inline keynote returns ShowInlineContent keynote`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("inline:keynote")
 
         assertTrue(action is CardAction.ShowInlineContent)
@@ -115,8 +132,8 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `parseCardAction navigate map returns NavigateToTab Map`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction navigate map returns NavigateToTab Map`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("navigate:map")
 
         assertTrue(action is CardAction.NavigateToTab)
@@ -125,8 +142,8 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `parseCardAction navigate facilities returns NavigateToTab Facilities`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction navigate facilities returns NavigateToTab Facilities`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("navigate:facilities")
 
         assertTrue(action is CardAction.NavigateToTab)
@@ -135,8 +152,8 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `parseCardAction navigate eventinfo returns NavigateToTab EventInfo`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction navigate eventinfo returns NavigateToTab EventInfo`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("navigate:eventinfo")
 
         assertTrue(action is CardAction.NavigateToTab)
@@ -145,8 +162,8 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `parseCardAction inline sessions returns ShowInlineContent sessions`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `parseCardAction inline sessions returns ShowInlineContent sessions`() = testScope.runTest {
+        val viewModel = createViewModel()
         val action = viewModel.parseCardAction("inline:sessions")
 
         assertTrue(action is CardAction.ShowInlineContent)
@@ -155,16 +172,16 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `tagline returns ThemeConfig tagline`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `tagline returns ThemeConfig tagline`() = testScope.runTest {
+        val viewModel = createViewModel()
         val tagline = viewModel.tagline.first()
 
         assertEquals("Women in Engineering Conference", tagline)
     }
 
     @Test
-    fun `cards updates when ThemeConfig changes`() = runTest {
-        val viewModel = HomeViewModel(mockThemeRepository)
+    fun `cards updates when ThemeConfig changes`() = testScope.runTest {
+        val viewModel = createViewModel()
 
         // Initial state: 6 cards
         assertEquals(6, viewModel.cards.first().size)
