@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,8 +27,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.gow.smaitrobot.CaeAudioManager
+import com.gow.smaitrobot.TtsAudioPlayer
 import com.gow.smaitrobot.data.model.ThemeConfig
 import com.gow.smaitrobot.jackieApp
+import com.gow.smaitrobot.ui.conversation.ConversationScreen
+import com.gow.smaitrobot.ui.conversation.ConversationViewModel
+import com.gow.smaitrobot.ui.conversation.VideoStreamManager
 import com.gow.smaitrobot.ui.eventinfo.EventInfoScreen
 import com.gow.smaitrobot.ui.eventinfo.EventInfoViewModel
 import com.gow.smaitrobot.ui.facilities.FacilitiesScreen
@@ -82,6 +88,17 @@ fun AppScaffold(
             FacilitiesViewModel(wsRepo)
         }
     )
+    val ttsPlayer = remember { TtsAudioPlayer().also { it.start() } }
+    val caeAudioManager = remember { CaeAudioManager(context) }
+    val videoStreamManager = remember { VideoStreamManager(wsRepo) }
+    val conversationViewModel = remember {
+        ConversationViewModel(
+            wsRepo = wsRepo,
+            ttsPlayer = ttsPlayer,
+            caeAudioManager = caeAudioManager,
+            videoStreamManager = videoStreamManager
+        )
+    }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
@@ -126,7 +143,7 @@ fun AppScaffold(
                 HomeScreen(viewModel = homeViewModel, navController = navController)
             }
             composable<Screen.Chat> {
-                PlaceholderScreen("Chat")
+                ConversationScreen(viewModel = conversationViewModel, navController = navController)
             }
             composable<Screen.Map> {
                 NavigationMapScreen(viewModel = navMapViewModel)

@@ -1,0 +1,181 @@
+package com.gow.smaitrobot.ui.conversation
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.gow.smaitrobot.data.model.UiEvent
+import com.gow.smaitrobot.ui.common.FeedbackDialog
+
+/**
+ * Primary interaction screen for conversing with Jackie.
+ *
+ * Layout (landscape-optimized for Jackie's kiosk display):
+ * ```
+ * ┌──────────────────┬──────────────────────────────────┐
+ * │                  │  Chat transcript (LazyColumn)    │
+ * │   RobotAvatar    │  (auto-scrolls to latest msg)   │
+ * │   (Lottie 200dp) │                                  │
+ * │                  │  [camera icon]                   │
+ * └──────────────────┴──────────────────────────────────┘
+ * ```
+ *
+ * Overlays:
+ * - [SelfieCapture] when showCamera=true
+ * - [FeedbackDialog] when showFeedback=true (after session end)
+ *
+ * UiEvent handling: Collects [UiEvent.NavigateTo] from [ConversationViewModel.uiEvents]
+ * and calls navController.navigate() with popUpTo(Home) for clean back-stack.
+ *
+ * @param viewModel     [ConversationViewModel] providing all state and actions.
+ * @param navController NavHostController for [UiEvent.NavigateTo] driven navigation.
+ */
+@Composable
+fun ConversationScreen(
+    viewModel: ConversationViewModel,
+    navController: NavHostController
+) {
+    val messages by viewModel.transcript.collectAsState()
+    val robotState by viewModel.robotState.collectAsState()
+    val showCamera by viewModel.showCamera.collectAsState()
+    val showFeedback by viewModel.showFeedback.collectAsState()
+
+    val listState = rememberLazyListState()
+
+    // Auto-scroll to latest message when transcript grows
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Collect one-shot UiEvents (navigation, etc.)
+    LaunchedEffect(Unit) {
+        viewModel.uiEvents.collect { event ->
+            when (event) {
+                is UiEvent.NavigateTo -> {
+                    navController.navigate(event.screen) {
+                        popUpTo(event.screen) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // Main content: avatar left, transcript right
+        Row(modifier = Modifier.fillMaxSize()) {
+
+            // Left: Robot avatar (40% of width)
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.4f),
+                contentAlignment = Alignment.Center
+            ) {
+                RobotAvatar(
+                    robotState = robotState,
+                    modifier = Modifier.size(200.dp)
+                )
+            }
+
+            // Right: Transcript + camera button (60% of width)
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.6f)
+                    .padding(end = 8.dp)
+            ) {
+                // Transcript list — auto-scrolls to newest message
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        ChatBubble(message = message)
+                    }
+
+                    // Empty state hint
+                    if (messages.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "Say something to start the conversation",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Bottom bar: camera icon
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Camera toggle button for selfie capture
+                    IconButton(
+                        onClick = { viewModel.toggleCamera() },
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CameraAlt,
+                            contentDescription = "Take selfie",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Selfie capture overlay — shown when user taps camera icon
+        if (showCamera) {
+            SelfieCapture(
+                onDismiss = { viewModel.toggleCamera() },
+                onCapture = { _ ->
+                    viewModel.toggleCamera()
+                }
+            )
+        }
+    }
+
+    // Feedback dialog — shown when session ends (outside Box to overlay everything)
+    if (showFeedback) {
+        FeedbackDialog(
+            onSubmit = { feedback -> viewModel.sendFeedback(feedback) },
+            onDismiss = { viewModel.dismissFeedback() }
+        )
+    }
+}
