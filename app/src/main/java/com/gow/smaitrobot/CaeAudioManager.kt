@@ -166,6 +166,30 @@ class CaeAudioManager(private val context: Context) {
         private set
 
     /**
+     * Optional writer callback for dependency-injection style audio delivery.
+     *
+     * When set, audio frames built by [buildAudioFrame] and [buildRaw4chFrame] are
+     * forwarded to this callback instead of (or in addition to) the WebSocket.
+     *
+     * Used by [ConversationViewModel] to wire CaeAudioManager into [WebSocketRepository]:
+     * ```kotlin
+     * caeAudioManager.setWriterCallback { bytes -> wsRepo.send(bytes) }
+     * ```
+     *
+     * This allows the ViewModel to own the WebSocket reference and keeps
+     * CaeAudioManager decoupled from the repository layer in tests.
+     */
+    private var writerCallback: ((ByteArray) -> Unit)? = null
+
+    /**
+     * Set the writer callback for outbound audio frames.
+     * Called from ConversationViewModel's init block.
+     */
+    fun setWriterCallback(callback: (ByteArray) -> Unit) {
+        writerCallback = callback
+    }
+
+    /**
      * Copy CAE model/config files from assets to /sdcard/cae/
      * Must be called once before first use (e.g., in onCreate).
      * Safe to call multiple times — skips files that already exist.
@@ -305,11 +329,14 @@ class CaeAudioManager(private val context: Context) {
     /**
      * Send CAE beamformed audio as 0x01 (AUDIO_CAE) binary WebSocket frame.
      * Called from onAudio CAE callback.
+     *
+     * Delivers to [writerCallback] if set (ViewModel/Repository pattern), otherwise
+     * falls through to direct [webSocket] send (legacy mode).
      */
     private fun sendAudio(audioData: ByteArray, dataLen: Int) {
         try {
             val frame = buildAudioFrame(audioData.copyOfRange(0, dataLen))
-            webSocket?.send(frame.toByteString(0, frame.size))
+            writerCallback?.invoke(frame) ?: webSocket?.send(frame.toByteString(0, frame.size))
         } catch (e: Exception) {
             Log.e(TAG, "Send CAE audio error", e)
         }
@@ -318,11 +345,14 @@ class CaeAudioManager(private val context: Context) {
     /**
      * Send raw 4-channel audio as 0x03 (AUDIO_RAW) binary WebSocket frame.
      * Called from pcmListener after extracting 4ch from 8ch ALSA data.
+     *
+     * Delivers to [writerCallback] if set (ViewModel/Repository pattern), otherwise
+     * falls through to direct [webSocket] send (legacy mode).
      */
     private fun sendRaw4ch(raw4chData: ByteArray) {
         try {
             val frame = buildRaw4chFrame(raw4chData)
-            webSocket?.send(frame.toByteString(0, frame.size))
+            writerCallback?.invoke(frame) ?: webSocket?.send(frame.toByteString(0, frame.size))
         } catch (e: Exception) {
             Log.e(TAG, "Send raw 4ch error", e)
         }
