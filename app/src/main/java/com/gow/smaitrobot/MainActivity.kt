@@ -941,38 +941,19 @@ class MainActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     private fun createCaptureSession() {
         try {
-            val surfaces = mutableListOf<Surface>()
+            // RK3588 external USB camera only supports a single output surface.
+            // Using dual surfaces (preview + ImageReader) causes broken pipe on Stream 1.
+            // Use ImageReader as the sole output target.
+            val surface = imageReader!!.surface
 
-            // Add preview surface — some camera HALs (especially external USB on RK3588)
-            // require a preview-type surface to deliver frames at all.
-            var previewSurface: Surface? = null
-            val texture = cameraPreview.surfaceTexture
-            if (texture != null) {
-                texture.setDefaultBufferSize(640, 480)
-                previewSurface = Surface(texture)
-                surfaces.add(previewSurface)
-            } else {
-                // TextureView not visible — create a dummy SurfaceTexture as preview stand-in.
-                // External camera HALs on RK3588 may refuse to stream without a preview surface.
-                Log.i(TAG, "TextureView not available — creating dummy SurfaceTexture for HAL compatibility")
-                val dummy = SurfaceTexture(0)
-                dummy.setDefaultBufferSize(640, 480)
-                dummySurfaceTexture = dummy
-                previewSurface = Surface(dummy)
-                surfaces.add(previewSurface)
-            }
-
-            // Always capture to ImageReader for WebSocket streaming
-            surfaces.add(imageReader!!.surface)
-
-            cameraDevice?.createCaptureSession(surfaces, object : CameraCaptureSession.StateCallback() {
+            cameraDevice?.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     captureSession = session
                     val builder = cameraDevice?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    previewSurface?.let { builder?.addTarget(it) }
-                    builder?.addTarget(imageReader!!.surface)
+                    builder?.addTarget(surface)
                     builder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                     builder?.let { session.setRepeatingRequest(it.build(), null, cameraHandler) }
+                    Log.i(TAG, "Capture session configured — single ImageReader surface, streaming")
                 }
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     Log.e(TAG, "Capture session config failed")
