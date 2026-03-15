@@ -907,7 +907,7 @@ class MainActivity : AppCompatActivity() {
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
 
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)
+            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 2)
             imageReader?.setOnImageAvailableListener({ reader ->
                 val image = reader.acquireLatestImage()
                 image?.let {
@@ -966,26 +966,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun processVideoFrame(image: Image) {
         try {
-            // Convert YUV_420_888 → NV21 → JPEG
-            val width = image.width
-            val height = image.height
-            val yBuffer = image.planes[0].buffer
-            val uBuffer = image.planes[1].buffer
-            val vBuffer = image.planes[2].buffer
-
-            val ySize = yBuffer.remaining()
-            val uSize = uBuffer.remaining()
-            val vSize = vBuffer.remaining()
-
-            val nv21 = ByteArray(ySize + uSize + vSize)
-            yBuffer.get(nv21, 0, ySize)
-            vBuffer.get(nv21, ySize, vSize)
-            uBuffer.get(nv21, ySize + vSize, uSize)
-
-            val yuvImage = android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, width, height, null)
-            val out = java.io.ByteArrayOutputStream()
-            yuvImage.compressToJpeg(android.graphics.Rect(0, 0, width, height), 70, out)
-            val jpegBytes = out.toByteArray()
+            // JPEG format — read directly from plane 0
+            val buffer = image.planes[0].buffer
+            val jpegBytes = ByteArray(buffer.remaining())
+            buffer.get(jpegBytes)
 
             lastJpegBytes = jpegBytes
 
