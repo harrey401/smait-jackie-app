@@ -12,7 +12,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.ImageFormat
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.YuvImage
@@ -22,8 +21,6 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
-import android.media.Image
-import android.media.ImageReader
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
@@ -139,7 +136,8 @@ class MainActivity : AppCompatActivity() {
     // ─── Camera ───
     private var cameraDevice: CameraDevice? = null
     private var captureSession: CameraCaptureSession? = null
-    private var imageReader: ImageReader? = null
+    // ImageReader removed — RK3588 gralloc cannot allocate CPU-readable buffers
+    // for external cameras. Using TextureView + getBitmap() instead.
     private lateinit var cameraHandler: Handler
     private lateinit var cameraThread: HandlerThread
     private var lastJpegBytes: ByteArray? = null
@@ -386,14 +384,17 @@ class MainActivity : AppCompatActivity() {
         retakeButton.setOnClickListener { startSelfieCountdown() }
         saveButton.setOnClickListener { saveSelfie() }
 
-        // Camera preview
+        // Camera preview — TextureView is the sole camera surface on RK3588.
+        // Frames are extracted via getBitmap() in onSurfaceTextureUpdated.
         cameraPreview.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
                 if (hasPermissions()) openCamera()
             }
             override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true
-            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+                sendTextureFrame()
+            }
         }
     }
 
@@ -894,7 +895,6 @@ class MainActivity : AppCompatActivity() {
     private fun openCamera() {
         val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
         try {
-            // Prefer EXTERNAL (Jackie's USB camera), then FRONT, then first available
             val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
                 val chars = cameraManager.getCameraCharacteristics(id)
                 chars.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_EXTERNAL
@@ -907,19 +907,14 @@ class MainActivity : AppCompatActivity() {
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) return
 
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 2)
-            imageReader?.setOnImageAvailableListener({ reader ->
-                val image = reader.acquireLatestImage()
-                image?.let {
-                    processVideoFrame(it)
-                    it.close()
-                }
-            }, cameraHandler)
-
+            // RK3588 external camera HAL cannot deliver to ImageReader (gralloc
+            // fails to allocate CPU-readable buffers for external cameras).
+            // Use TextureView as the sole surface — frames are extracted via
+            // getBitmap() in onSurfaceTextureUpdated.
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    createCaptureSession()
+                    createPreviewSession()
                 }
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
@@ -936,15 +931,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var dummySurfaceTexture: SurfaceTexture? = null
-
     @Suppress("DEPRECATION")
-    private fun createCaptureSession() {
+    private fun createPreviewSession() {
         try {
-            // RK3588 external USB camera only supports a single output surface.
-            // Using dual surfaces (preview + ImageReader) causes broken pipe on Stream 1.
-            // Use ImageReader as the sole output target.
-            val surface = imageReader!!.surface
+            val texture = cameraPreview.surfaceTexture
+            if (texture == null) {
+                Log.w(TAG, "TextureView not ready — deferring camera session")
+                return
+            }
+            texture.setDefaultBufferSize(640, 480)
+            val surface = Surface(texture)
 
             cameraDevice?.createCaptureSession(listOf(surface), object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
@@ -953,7 +949,7 @@ class MainActivity : AppCompatActivity() {
                     builder?.addTarget(surface)
                     builder?.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                     builder?.let { session.setRepeatingRequest(it.build(), null, cameraHandler) }
-                    Log.i(TAG, "Capture session configured — single ImageReader surface, streaming")
+                    Log.i(TAG, "Capture session configured — TextureView preview, streaming at ~10fps over WS")
                 }
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     Log.e(TAG, "Capture session config failed")
@@ -964,23 +960,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun processVideoFrame(image: Image) {
-        try {
-            // JPEG format — read directly from plane 0
-            val buffer = image.planes[0].buffer
-            val jpegBytes = ByteArray(buffer.remaining())
-            buffer.get(jpegBytes)
+    private var videoFrameCount = 0L
 
-            lastJpegBytes = jpegBytes
+    private fun sendTextureFrame() {
+        // Throttle to ~10fps (every 3rd frame from 30fps camera)
+        videoFrameCount++
+        if (videoFrameCount % 3 != 0L) return
+        if (!isStreaming.get()) return
 
-            if (isStreaming.get()) {
+        val bitmap = cameraPreview.getBitmap(640, 480) ?: return
+
+        cameraHandler.post {
+            try {
+                val stream = java.io.ByteArrayOutputStream()
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, stream)
+                val jpegBytes = stream.toByteArray()
+                bitmap.recycle()
+
+                lastJpegBytes = jpegBytes
+
                 val frame = ByteArray(1 + jpegBytes.size)
                 frame[0] = VIDEO_TYPE
                 System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
                 webSocket?.send(frame.toByteString(0, frame.size))
+            } catch (e: Exception) {
+                Log.e(TAG, "Video frame error", e)
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Video frame error", e)
         }
     }
 
@@ -1351,9 +1356,6 @@ class MainActivity : AppCompatActivity() {
         selfieCountdownTimer?.cancel()
         captureSession?.close()
         cameraDevice?.close()
-        imageReader?.close()
-        dummySurfaceTexture?.release()
-        dummySurfaceTexture = null
         cameraThread.quitSafely()
         animators.forEach { it.cancel() }
         particleAnimator?.cancel()
