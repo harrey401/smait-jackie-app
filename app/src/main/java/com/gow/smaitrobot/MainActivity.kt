@@ -893,6 +893,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
+        // Don't re-open if already active — avoids evicting our own session
+        if (cameraDevice != null) {
+            Log.d(TAG, "Camera already open, skipping")
+            return
+        }
         val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
         try {
             val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
@@ -931,14 +936,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var previewRetryCount = 0
+
     @Suppress("DEPRECATION")
     private fun createPreviewSession() {
         try {
             val texture = cameraPreview.surfaceTexture
             if (texture == null) {
-                Log.w(TAG, "TextureView not ready — deferring camera session")
+                if (previewRetryCount < 10) {
+                    previewRetryCount++
+                    Log.w(TAG, "TextureView not ready — retry $previewRetryCount/10 in 300ms")
+                    cameraHandler.postDelayed({ createPreviewSession() }, 300)
+                } else {
+                    Log.e(TAG, "TextureView never became ready after 10 retries")
+                    previewRetryCount = 0
+                }
                 return
             }
+            previewRetryCount = 0
             texture.setDefaultBufferSize(640, 480)
             val surface = Surface(texture)
 
