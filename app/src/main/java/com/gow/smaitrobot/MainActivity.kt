@@ -914,7 +914,7 @@ class MainActivity : AppCompatActivity() {
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    createPreviewSession()
+                    runOnUiThread { createPreviewSession() }
                 }
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
