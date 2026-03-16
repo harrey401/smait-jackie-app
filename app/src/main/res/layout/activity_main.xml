@@ -433,6 +433,15 @@
         </LinearLayout>
     </FrameLayout>
 
+    <!-- Hidden TextureView for camera frame capture — must be visible (1x1px)
+         so that onSurfaceTextureAvailable fires regardless of active/idle state.
+         The actual camera preview is shown in activeScreen's cameraPreview. -->
+    <TextureView
+        android:id="@+id/hiddenCameraTexture"
+        android:layout_width="1px"
+        android:layout_height="1px"
+        android:layout_gravity="bottom|start" />
+
     <!-- ==================== GEAR BUTTON (always visible) ==================== -->
     <TextView
         android:id="@+id/gearButton"

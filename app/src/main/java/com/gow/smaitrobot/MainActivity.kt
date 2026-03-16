@@ -92,6 +92,7 @@ class MainActivity : AppCompatActivity() {
 
     // Active
     private lateinit var cameraPreview: TextureView
+    private lateinit var hiddenCameraTexture: TextureView
     private lateinit var chatRecyclerView: RecyclerView
     private lateinit var statusDot: View
     private lateinit var robotStatusText: TextView
@@ -242,6 +243,7 @@ class MainActivity : AppCompatActivity() {
 
         // Active
         cameraPreview = findViewById(R.id.cameraPreview)
+        hiddenCameraTexture = findViewById(R.id.hiddenCameraTexture)
         chatRecyclerView = findViewById(R.id.chatRecyclerView)
         statusDot = findViewById(R.id.statusDot)
         robotStatusText = findViewById(R.id.robotStatusText)
@@ -384,10 +386,12 @@ class MainActivity : AppCompatActivity() {
         retakeButton.setOnClickListener { startSelfieCountdown() }
         saveButton.setOnClickListener { saveSelfie() }
 
-        // Camera preview — TextureView is the sole camera surface on RK3588.
-        // Frames are extracted via getBitmap() in onSurfaceTextureUpdated.
-        cameraPreview.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+        // Camera capture uses hiddenCameraTexture (1x1px, always visible) so that
+        // onSurfaceTextureAvailable fires immediately regardless of idle/active state.
+        // The activeScreen's cameraPreview TextureView is only for on-screen display.
+        hiddenCameraTexture.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                Log.i(TAG, "Hidden camera texture available — opening camera")
                 if (hasPermissions()) openCamera()
             }
             override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
@@ -879,7 +883,7 @@ class MainActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE && hasPermissions()) {
-            if (cameraPreview.isAvailable) openCamera()
+            if (hiddenCameraTexture.isAvailable) openCamera()
         }
     }
 
@@ -936,7 +940,7 @@ class MainActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     private fun createPreviewSession() {
         try {
-            val texture = cameraPreview.surfaceTexture
+            val texture = hiddenCameraTexture.surfaceTexture
             if (texture == null) {
                 if (previewRetryCount < 15) {
                     previewRetryCount++
@@ -978,7 +982,7 @@ class MainActivity : AppCompatActivity() {
         if (videoFrameCount % 3 != 0L) return
         if (!isStreaming.get()) return
 
-        val bitmap = cameraPreview.getBitmap(640, 480) ?: return
+        val bitmap = hiddenCameraTexture.getBitmap(640, 480) ?: return
 
         cameraHandler.post {
             try {
@@ -1054,9 +1058,12 @@ class MainActivity : AppCompatActivity() {
                 reconnectDelay = INITIAL_RECONNECT_DELAY_MS
                 updateConnectionDot(true)
                 startAudioCapture()
-                // Start camera immediately on connect (don't wait for TextureView)
+                // Camera is opened by hiddenCameraTexture's onSurfaceTextureAvailable.
+                // If already available, open now.
                 runOnUiThread {
-                    if (hasPermissions()) openCamera()
+                    if (hasPermissions() && cameraDevice == null && hiddenCameraTexture.isAvailable) {
+                        openCamera()
+                    }
                 }
                 Log.i(TAG, "Connected to $url")
             }
@@ -1279,7 +1286,7 @@ class MainActivity : AppCompatActivity() {
             selfiePreview.setImageBitmap(selfieBitmap)
             showSelfiePreview()
         } else {
-            selfieBitmap = cameraPreview.bitmap
+            selfieBitmap = hiddenCameraTexture.bitmap
             if (selfieBitmap != null) {
                 selfiePreview.setImageBitmap(selfieBitmap)
                 showSelfiePreview()
