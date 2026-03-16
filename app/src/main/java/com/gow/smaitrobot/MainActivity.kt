@@ -919,7 +919,8 @@ class MainActivity : AppCompatActivity() {
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    createPreviewSession()
+                    // Must access TextureView.surfaceTexture from UI thread
+                    runOnUiThread { createPreviewSession() }
                 }
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
@@ -946,7 +947,7 @@ class MainActivity : AppCompatActivity() {
                 if (previewRetryCount < 10) {
                     previewRetryCount++
                     Log.w(TAG, "TextureView not ready — retry $previewRetryCount/10 in 300ms")
-                    cameraHandler.postDelayed({ createPreviewSession() }, 300)
+                    mainHandler.postDelayed({ createPreviewSession() }, 300)
                 } else {
                     Log.e(TAG, "TextureView never became ready after 10 retries")
                     previewRetryCount = 0
@@ -1067,9 +1068,12 @@ class MainActivity : AppCompatActivity() {
                 reconnectDelay = INITIAL_RECONNECT_DELAY_MS
                 updateConnectionDot(true)
                 startAudioCapture()
-                // Start camera immediately on connect (don't wait for TextureView)
+                // Camera is opened by onSurfaceTextureAvailable — don't re-open here.
+                // If TextureView is already available but camera not yet open, open now.
                 runOnUiThread {
-                    if (hasPermissions()) openCamera()
+                    if (hasPermissions() && cameraDevice == null && cameraPreview.isAvailable) {
+                        openCamera()
+                    }
                 }
                 Log.i(TAG, "Connected to $url")
             }
