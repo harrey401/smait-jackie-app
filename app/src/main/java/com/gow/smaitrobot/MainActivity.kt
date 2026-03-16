@@ -893,11 +893,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
-        // Don't re-open if already active — avoids evicting our own session
-        if (cameraDevice != null) {
-            Log.d(TAG, "Camera already open, skipping")
-            return
-        }
         val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
         try {
             val cameraId = cameraManager.cameraIdList.firstOrNull { id ->
@@ -919,8 +914,7 @@ class MainActivity : AppCompatActivity() {
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    // Must access TextureView.surfaceTexture from UI thread
-                    runOnUiThread { createPreviewSession() }
+                    createPreviewSession()
                 }
                 override fun onDisconnected(camera: CameraDevice) {
                     camera.close()
@@ -937,24 +931,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var previewRetryCount = 0
-
     @Suppress("DEPRECATION")
     private fun createPreviewSession() {
         try {
             val texture = cameraPreview.surfaceTexture
             if (texture == null) {
-                if (previewRetryCount < 10) {
-                    previewRetryCount++
-                    Log.w(TAG, "TextureView not ready — retry $previewRetryCount/10 in 300ms")
-                    mainHandler.postDelayed({ createPreviewSession() }, 300)
-                } else {
-                    Log.e(TAG, "TextureView never became ready after 10 retries")
-                    previewRetryCount = 0
-                }
+                Log.w(TAG, "TextureView not ready — deferring camera session")
                 return
             }
-            previewRetryCount = 0
             texture.setDefaultBufferSize(640, 480)
             val surface = Surface(texture)
 
@@ -982,16 +966,9 @@ class MainActivity : AppCompatActivity() {
         // Throttle to ~10fps (every 3rd frame from 30fps camera)
         videoFrameCount++
         if (videoFrameCount % 3 != 0L) return
-        if (!isStreaming.get()) {
-            if (videoFrameCount % 90 == 0L) Log.d(TAG, "sendTextureFrame: not streaming yet (frame=$videoFrameCount)")
-            return
-        }
+        if (!isStreaming.get()) return
 
-        val bitmap = cameraPreview.getBitmap(640, 480)
-        if (bitmap == null) {
-            if (videoFrameCount % 90 == 0L) Log.w(TAG, "sendTextureFrame: getBitmap returned null")
-            return
-        }
+        val bitmap = cameraPreview.getBitmap(640, 480) ?: return
 
         cameraHandler.post {
             try {
@@ -1006,7 +983,6 @@ class MainActivity : AppCompatActivity() {
                 frame[0] = VIDEO_TYPE
                 System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
                 webSocket?.send(frame.toByteString(0, frame.size))
-                if (videoFrameCount % 90 == 0L) Log.d(TAG, "Video frame sent: ${jpegBytes.size} bytes (frame=$videoFrameCount)")
             } catch (e: Exception) {
                 Log.e(TAG, "Video frame error", e)
             }
@@ -1068,12 +1044,9 @@ class MainActivity : AppCompatActivity() {
                 reconnectDelay = INITIAL_RECONNECT_DELAY_MS
                 updateConnectionDot(true)
                 startAudioCapture()
-                // Camera is opened by onSurfaceTextureAvailable — don't re-open here.
-                // If TextureView is already available but camera not yet open, open now.
+                // Start camera immediately on connect (don't wait for TextureView)
                 runOnUiThread {
-                    if (hasPermissions() && cameraDevice == null && cameraPreview.isAvailable) {
-                        openCamera()
-                    }
+                    if (hasPermissions()) openCamera()
                 }
                 Log.i(TAG, "Connected to $url")
             }
