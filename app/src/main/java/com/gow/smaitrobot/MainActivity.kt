@@ -931,14 +931,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var previewRetryCount = 0
+
     @Suppress("DEPRECATION")
     private fun createPreviewSession() {
         try {
             val texture = cameraPreview.surfaceTexture
             if (texture == null) {
-                Log.w(TAG, "TextureView not ready — deferring camera session")
+                if (previewRetryCount < 15) {
+                    previewRetryCount++
+                    Log.w(TAG, "TextureView not ready — retry $previewRetryCount/15 in 200ms")
+                    mainHandler.postDelayed({ createPreviewSession() }, 200)
+                } else {
+                    Log.e(TAG, "TextureView never became ready")
+                    previewRetryCount = 0
+                }
                 return
             }
+            previewRetryCount = 0
             texture.setDefaultBufferSize(640, 480)
             val surface = Surface(texture)
 
@@ -1088,10 +1098,18 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    private fun closeCamera() {
+        captureSession?.close()
+        captureSession = null
+        cameraDevice?.close()
+        cameraDevice = null
+    }
+
     private fun onDisconnected() {
         isConnected.set(false)
         isStreaming.set(false)
         stopAudioCapture()
+        closeCamera()
         updateConnectionDot(false)
 
         if (shouldReconnect) {
