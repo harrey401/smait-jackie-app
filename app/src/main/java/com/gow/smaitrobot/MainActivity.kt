@@ -981,9 +981,16 @@ class MainActivity : AppCompatActivity() {
         // Throttle to ~10fps (every 3rd frame from 30fps camera)
         videoFrameCount++
         if (videoFrameCount % 3 != 0L) return
-        if (!isStreaming.get()) return
+        if (!isStreaming.get()) {
+            if (videoFrameCount % 90 == 0L) Log.d(TAG, "sendTextureFrame: not streaming yet (frame=$videoFrameCount)")
+            return
+        }
 
-        val bitmap = cameraPreview.getBitmap(640, 480) ?: return
+        val bitmap = cameraPreview.getBitmap(640, 480)
+        if (bitmap == null) {
+            if (videoFrameCount % 90 == 0L) Log.w(TAG, "sendTextureFrame: getBitmap returned null")
+            return
+        }
 
         cameraHandler.post {
             try {
@@ -998,6 +1005,7 @@ class MainActivity : AppCompatActivity() {
                 frame[0] = VIDEO_TYPE
                 System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
                 webSocket?.send(frame.toByteString(0, frame.size))
+                if (videoFrameCount % 90 == 0L) Log.d(TAG, "Video frame sent: ${jpegBytes.size} bytes (frame=$videoFrameCount)")
             } catch (e: Exception) {
                 Log.e(TAG, "Video frame error", e)
             }
