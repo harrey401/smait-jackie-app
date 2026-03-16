@@ -11,6 +11,7 @@ import android.media.Image
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.view.Surface
 import com.gow.smaitrobot.data.websocket.WebSocketRepository
@@ -41,6 +42,8 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
         private const val FRAME_HEIGHT = 240
         private const val JPEG_QUALITY = 60
         private const val MIN_FRAME_INTERVAL_MS = 100L // ~10fps
+        private const val MAX_SESSION_RETRIES = 15
+        private const val SESSION_RETRY_DELAY_MS = 200L
     }
 
     private var cameraDevice: CameraDevice? = null
@@ -50,6 +53,8 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
     private var dummyTexture: SurfaceTexture? = null
     private var dummySurface: Surface? = null
     private var lastFrameSentMs = 0L
+    private var sessionRetryCount = 0
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     /**
      * Opens the camera and starts continuous JPEG frame capture.
@@ -81,20 +86,21 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
             cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
                 override fun onOpened(camera: CameraDevice) {
                     cameraDevice = camera
-                    startCaptureSession(camera, reader, handler)
+                    sessionRetryCount = 0
+                    // RK3588 fix: createCaptureSession must run on UI thread —
+                    // SurfaceTexture returns null from camera handler thread.
+                    mainHandler.post { startCaptureSession(camera, reader, handler) }
                     Log.i(TAG, "Camera opened: $cameraId")
                 }
 
                 override fun onDisconnected(camera: CameraDevice) {
                     Log.w(TAG, "Camera disconnected")
-                    camera.close()
-                    cameraDevice = null
+                    closeCamera()
                 }
 
                 override fun onError(camera: CameraDevice, error: Int) {
                     Log.e(TAG, "Camera error: $error")
-                    camera.close()
-                    cameraDevice = null
+                    closeCamera()
                 }
             }, handler)
         } catch (e: Exception) {
@@ -107,26 +113,34 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
      * Safe to call if [start] was never called or already stopped.
      */
     fun stop() {
-        try {
-            cameraDevice?.close()
-            cameraDevice = null
-        } catch (e: Exception) {
-            Log.w(TAG, "Camera close error", e)
-        }
+        closeCamera()
         try {
             imageReader?.close()
             imageReader = null
         } catch (e: Exception) {
             Log.w(TAG, "ImageReader close error", e)
         }
-        dummySurface?.release()
-        dummySurface = null
-        dummyTexture?.release()
-        dummyTexture = null
         cameraThread?.quitSafely()
         cameraThread = null
         cameraHandler = null
         Log.i(TAG, "Video stream stopped")
+    }
+
+    /**
+     * Closes the camera device and releases surfaces.
+     * Prevents camera self-eviction on RK3588 by explicitly releasing in onDisconnected.
+     */
+    private fun closeCamera() {
+        try {
+            cameraDevice?.close()
+            cameraDevice = null
+        } catch (e: Exception) {
+            Log.w(TAG, "Camera close error", e)
+        }
+        dummySurface?.release()
+        dummySurface = null
+        dummyTexture?.release()
+        dummyTexture = null
     }
 
     // ── Private implementation ────────────────────────────────────────────────
@@ -163,6 +177,13 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
         reader: ImageReader,
         handler: Handler
     ) {
+        // RK3588 fix: SurfaceTexture may not be ready on first attempt.
+        // Retry up to MAX_SESSION_RETRIES times with delay.
+        if (camera != cameraDevice) {
+            Log.w(TAG, "Camera changed before session started — aborting")
+            return
+        }
+
         try {
             val readerSurface = reader.surface
 
@@ -196,7 +217,13 @@ class VideoStreamManager(private val wsRepo: WebSocketRepository) {
                 handler
             )
         } catch (e: Exception) {
-            Log.e(TAG, "createCaptureSession failed", e)
+            Log.e(TAG, "createCaptureSession failed (attempt ${sessionRetryCount + 1})", e)
+            if (sessionRetryCount < MAX_SESSION_RETRIES) {
+                sessionRetryCount++
+                mainHandler.postDelayed({ startCaptureSession(camera, reader, handler) }, SESSION_RETRY_DELAY_MS)
+            } else {
+                Log.e(TAG, "Exhausted $MAX_SESSION_RETRIES retries — camera session failed")
+            }
         }
     }
 
