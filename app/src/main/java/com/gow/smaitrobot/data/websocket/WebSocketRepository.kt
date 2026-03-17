@@ -53,6 +53,9 @@ class WebSocketRepository(
     /** True when the WebSocket connection is open. */
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
+    /** Exposes the raw WebSocket for CaeAudioManager DOA frames. */
+    var currentWebSocket: WebSocket? = null
+        private set
     private var webSocket: WebSocket? = null
     private var lastUrl: String? = null
     private var reconnectDelayMs: Long = 1_000L
@@ -93,6 +96,7 @@ class WebSocketRepository(
         reconnecting = false
         webSocket?.close(1000, "Client disconnect")
         webSocket = null
+        currentWebSocket = null
     }
 
     /** Releases the coroutine scope. Call when the repository is no longer needed. */
@@ -107,6 +111,7 @@ class WebSocketRepository(
 
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d(TAG, "onOpen: connected")
+            currentWebSocket = webSocket
             _isConnected.value = true
             reconnectDelayMs = 1_000L
             reconnecting = false

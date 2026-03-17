@@ -5,11 +5,13 @@ import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -107,21 +109,37 @@ fun AppScaffold(
         }
     }
 
-    // Start audio + video capture on launch
-    LaunchedEffect(Unit) {
-        if (isEmulator) {
-            standardAudioManager?.setWriterCallback { bytes -> wsRepo.send(bytes) }
-            standardAudioManager?.start()
-            Log.i(TAG, "Started StandardAudioManager for emulator")
+    // Start audio + video capture once WebSocket connects
+    val isConnected by wsRepo.isConnected.collectAsStateWithLifecycle()
+    LaunchedEffect(isConnected) {
+        if (isConnected) {
+            if (isEmulator) {
+                standardAudioManager?.setWriterCallback { bytes -> wsRepo.send(bytes) }
+                standardAudioManager?.start()
+                Log.i(TAG, "Started StandardAudioManager for emulator")
+            } else {
+                // Jackie: copy CAE assets and start beamformed audio
+                caeAudioManager.copyAssetsIfNeeded()
+                // Writer callback is set by ConversationViewModel.init
+                // Start needs a WebSocket for DOA — get it from the repo
+                val ws = wsRepo.currentWebSocket
+                if (ws != null) {
+                    caeAudioManager.start(ws)
+                    Log.i(TAG, "Started CaeAudioManager for Jackie")
+                } else {
+                    Log.w(TAG, "WebSocket connected but currentWebSocket is null")
+                }
+            }
+            videoStreamManager.start(context)
+            Log.i(TAG, "Started VideoStreamManager")
         }
-        videoStreamManager.start(context)
-        Log.i(TAG, "Started VideoStreamManager")
     }
 
     // Cleanup on dispose
     DisposableEffect(Unit) {
         onDispose {
             standardAudioManager?.stop()
+            caeAudioManager.stop()
             videoStreamManager.stop()
             wsRepo.disconnect()
         }
