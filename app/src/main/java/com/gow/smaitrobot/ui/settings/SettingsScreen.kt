@@ -64,7 +64,7 @@ fun SettingsScreen(
     ) {
         SubScreenTopBar(
             title = "Settings",
-            navController = navController
+            onBack = { navController.popBackStack() }
         )
 
         Column(
