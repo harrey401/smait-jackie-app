@@ -17,6 +17,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.gow.smaitrobot.CaeAudioManager
+import com.gow.smaitrobot.ChassisProxy
 import com.gow.smaitrobot.StandardAudioManager
 import com.gow.smaitrobot.TtsAudioPlayer
 import com.gow.smaitrobot.data.model.ThemeConfig
@@ -131,7 +132,7 @@ fun AppScaffold(
                 // Start chassis proxy — bridges server ↔ chassis (192.168.20.22:9090)
                 val proxy = ChassisProxy(
                     chassisUrl = "ws://192.168.20.22:9090",
-                    serverSender = { json -> wsRepo.send(json) }
+                    serverSender = { json: String -> wsRepo.send(json) }
                 )
                 proxy.connect()
                 context.jackieApp.chassisProxy = proxy
