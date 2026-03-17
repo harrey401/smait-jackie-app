@@ -27,7 +27,6 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -180,16 +179,12 @@ private fun VolumeSection(context: Context) {
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
 
-    // Re-read actual system volume every time this composable enters composition
-    val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-
-    var volumePercent by remember(currentVolume) {
-        mutableFloatStateOf(if (maxVolume > 0) currentVolume.toFloat() / maxVolume else 0.5f)
-    }
-    var applied by remember(currentVolume) { mutableStateOf(true) }
+    // Use integer volume as the source of truth — maps directly to system volume index
+    var volumeIndex by remember { mutableStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    val percent = if (maxVolume > 0) (volumeIndex * 100) / maxVolume else 50
 
     Text(
-        text = "Speaker Volume: ${(volumePercent * 100).toInt()}%",
+        text = "Speaker Volume: $percent%",
         color = MaterialTheme.colorScheme.onBackground,
         fontSize = 20.sp,
         fontWeight = FontWeight.Medium
@@ -198,12 +193,15 @@ private fun VolumeSection(context: Context) {
     Spacer(modifier = Modifier.height(8.dp))
 
     Slider(
-        value = volumePercent,
+        value = volumeIndex.toFloat(),
         onValueChange = { newValue ->
-            volumePercent = newValue
-            applied = false
+            volumeIndex = newValue.toInt()
         },
-        valueRange = 0f..1f,
+        onValueChangeFinished = {
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volumeIndex, AudioManager.FLAG_SHOW_UI)
+        },
+        valueRange = 0f..maxVolume.toFloat(),
+        steps = maxVolume - 1,
         modifier = Modifier.fillMaxWidth(),
         colors = SliderDefaults.colors(
             thumbColor = MaterialTheme.colorScheme.primary,
@@ -216,17 +214,4 @@ private fun VolumeSection(context: Context) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontSize = 14.sp
     )
-
-    Spacer(modifier = Modifier.height(12.dp))
-
-    Button(
-        onClick = {
-            val newVolume = (volumePercent * maxVolume).toInt()
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolume, 0)
-            applied = true
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(if (applied) "Volume Applied" else "Apply Volume")
-    }
 }
