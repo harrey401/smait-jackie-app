@@ -46,7 +46,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        configureImmersiveMode()
         requestRequiredPermissions()
 
         val themeRepo = jackieApp.themeRepository
@@ -61,6 +60,9 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+
+        // Must be called after setContent so DecorView exists
+        configureImmersiveMode()
     }
 
     override fun onResume() {
