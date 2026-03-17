@@ -56,6 +56,10 @@ class WebSocketRepository(
     /** Exposes the raw WebSocket for CaeAudioManager DOA frames. */
     var currentWebSocket: WebSocket? = null
         private set
+
+    /** ChassisProxy for routing chassis_cmd messages. Set by AppNavigation. */
+    var chassisProxy: com.gow.smaitrobot.ChassisProxy? = null
+
     private var webSocket: WebSocket? = null
     private var lastUrl: String? = null
     private var reconnectDelayMs: Long = 1_000L
@@ -128,6 +132,21 @@ class WebSocketRepository(
             } catch (e: Exception) {
                 "unknown"
             }
+
+            // Intercept chassis_cmd — forward payload to chassis proxy
+            if (type == "chassis_cmd") {
+                try {
+                    val json = JSONObject(text)
+                    val payload = json.optJSONObject("payload")
+                    if (payload != null) {
+                        chassisProxy?.forwardToChassisRaw(payload.toString())
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to forward chassis_cmd: ${e.message}")
+                }
+                return  // Don't emit as normal event
+            }
+
             emitEvent(WebSocketEvent.JsonMessage(type, text))
         }
 

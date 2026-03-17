@@ -30,6 +30,8 @@ class JackieApplication : Application() {
     lateinit var ttsAudioPlayer: TtsAudioPlayer
         private set
 
+    var chassisProxy: ChassisProxy? = null
+
     override fun onCreate() {
         super.onCreate()
 

@@ -120,8 +120,6 @@ fun AppScaffold(
             } else {
                 // Jackie: copy CAE assets and start beamformed audio
                 caeAudioManager.copyAssetsIfNeeded()
-                // Writer callback is set by ConversationViewModel.init
-                // Start needs a WebSocket for DOA — get it from the repo
                 val ws = wsRepo.currentWebSocket
                 if (ws != null) {
                     caeAudioManager.start(ws)
@@ -129,6 +127,16 @@ fun AppScaffold(
                 } else {
                     Log.w(TAG, "WebSocket connected but currentWebSocket is null")
                 }
+
+                // Start chassis proxy — bridges server ↔ chassis (192.168.20.22:9090)
+                val proxy = ChassisProxy(
+                    chassisUrl = "ws://192.168.20.22:9090",
+                    serverSender = { json -> wsRepo.send(json) }
+                )
+                proxy.connect()
+                context.jackieApp.chassisProxy = proxy
+                wsRepo.chassisProxy = proxy
+                Log.i(TAG, "Started ChassisProxy")
             }
             videoStreamManager.start(context)
             Log.i(TAG, "Started VideoStreamManager")
