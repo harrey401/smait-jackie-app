@@ -179,8 +179,18 @@ private fun VolumeSection(context: Context) {
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
     val maxVolume = remember { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
 
-    // Use integer volume as the source of truth — maps directly to system volume index
+    // Re-sync slider with actual system volume every time this screen becomes visible
     var volumeIndex by remember { mutableStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                volumeIndex = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val percent = if (maxVolume > 0) (volumeIndex * 100) / maxVolume else 50
 
     Text(
