@@ -185,7 +185,9 @@ class ConversationViewModel(
         when (event.type) {
             "transcript" -> {
                 val text = parseTextField(payload, "text") ?: return
-                appendMessage(ChatMessage(id = UUID.randomUUID().toString(), text = text, isUser = true))
+                val speaker = parseTextField(payload, "speaker") ?: "user"
+                val isUser = speaker != "robot"
+                appendMessage(ChatMessage(id = UUID.randomUUID().toString(), text = text, isUser = isUser))
             }
             "response" -> {
                 val text = parseTextField(payload, "text") ?: return
