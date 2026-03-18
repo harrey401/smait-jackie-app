@@ -27,7 +27,7 @@ import org.json.JSONObject
 import java.util.UUID
 
 private const val TAG = "ConversationVM"
-private const val SILENCE_TIMEOUT_MS = 120_000L  // 2 min — navigation can take a while
+private const val SILENCE_TIMEOUT_MS = 30_000L
 
 /**
  * ViewModel for the Conversation screen.
@@ -94,6 +94,10 @@ class ConversationViewModel(
      * Set true on first non-IDLE state; used to detect session-end when state returns to IDLE.
      */
     private var wasConversing = false
+
+    // ── Navigation state ───────────────────────────────────────────────────────
+
+    private var isNavigating = false
 
     // ── Silence timeout ───────────────────────────────────────────────────────
 
@@ -201,6 +205,19 @@ class ConversationViewModel(
                     _showFeedback.value = true
                 }
             }
+            "nav_status" -> {
+                val status = parseTextField(payload, "status") ?: return
+                when (status) {
+                    "navigating" -> {
+                        isNavigating = true
+                        silenceJob?.cancel()  // Pause timer during navigation
+                    }
+                    "arrived", "failed" -> {
+                        isNavigating = false
+                        resetSilenceTimer()  // Resume timer after navigation ends
+                    }
+                }
+            }
             "tts_control" -> {
                 // TTS control messages (start/stop) — forward to TTS player for stop handling
                 val cmd = parseTextField(payload, "command")
@@ -286,6 +303,7 @@ class ConversationViewModel(
      */
     private fun resetSilenceTimer() {
         silenceJob?.cancel()
+        if (isNavigating) return  // Don't timeout while robot is moving
         silenceJob = scope.launch {
             delay(SILENCE_TIMEOUT_MS)
             Log.d(TAG, "Silence timeout — returning to Home")
