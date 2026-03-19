@@ -1,5 +1,5 @@
 {
-  "eventName": "WiE 2026",
+  "eventName": "SV WiE 2026",
   "tagline": "Engineering Beyond Imagination",
   "logoAsset": "wie_logo.png",
   "colors": {
@@ -33,25 +33,19 @@
       "label": "Keynote Info",
       "action": "inline:keynote",
       "icon": "star",
-      "description": "Details about today's keynote speaker"
+      "description": "Details about today's keynote speakers"
     },
     {
-      "label": "Session Tracks",
-      "action": "inline:sessions",
-      "icon": "schedule",
-      "description": "Browse technical sessions, workshops, and panels"
-    },
-    {
-      "label": "Facilities",
-      "action": "navigate:facilities",
-      "icon": "location",
-      "description": "Find restrooms, prayer rooms, and other facilities"
-    },
-    {
-      "label": "Event Info",
+      "label": "Schedule",
       "action": "navigate:eventinfo",
-      "icon": "info",
-      "description": "Venue map, WiFi, schedule, and general info"
+      "icon": "schedule",
+      "description": "Full conference schedule, sessions, and career panels"
+    },
+    {
+      "label": "Event Website",
+      "action": "url:https://2026.siliconvalleywie.org/",
+      "icon": "web",
+      "description": "Visit the SV WiE 2026 conference website"
     },
     {
       "label": "Settings",
@@ -62,69 +56,249 @@
   ],
   "sponsors": [
     {
-      "name": "City of San Jose",
-      "logoAsset": "sponsor_city_sj.png"
+      "name": "Google",
+      "logoAsset": "sponsor_google.png"
+    },
+    {
+      "name": "Dexcom",
+      "logoAsset": "sponsor_dexcom.png"
+    },
+    {
+      "name": "Teradyne",
+      "logoAsset": "sponsor_teradyne.png"
+    },
+    {
+      "name": "Synopsys",
+      "logoAsset": "sponsor_synopsys.png"
+    },
+    {
+      "name": "Marvell",
+      "logoAsset": "sponsor_marvell.png"
+    },
+    {
+      "name": "KLA",
+      "logoAsset": "sponsor_kla.png"
     },
     {
       "name": "Adobe",
       "logoAsset": "sponsor_adobe.png"
     },
     {
-      "name": "LEGO Education",
-      "logoAsset": "sponsor_lego.png"
+      "name": "IBM",
+      "logoAsset": "sponsor_ibm.png"
     },
     {
-      "name": "The Tech Interactive",
-      "logoAsset": "sponsor_tech.png"
-    },
-    {
-      "name": "Cadence",
-      "logoAsset": "sponsor_cadence.png"
-    },
-    {
-      "name": "NVIDIA",
-      "logoAsset": "sponsor_nvidia.png"
+      "name": "Skydio",
+      "logoAsset": "sponsor_skydio.png"
     }
   ],
   "schedule": [
     {
-      "time": "9:00 AM",
-      "title": "Registration & Welcome Coffee",
+      "time": "7:30 AM",
+      "title": "Registration & Breakfast",
       "speaker": "",
       "location": "Student Union Lobby",
       "track": "general"
     },
     {
-      "time": "10:00 AM",
-      "title": "Keynote: Breaking Barriers in Engineering",
-      "speaker": "Dr. Sarah Chen",
-      "location": "Ballroom A",
+      "time": "8:30 AM",
+      "title": "Welcome & Opening Keynote",
+      "speaker": "Ashraf Karim, Sr. VP, ServiceNow",
+      "location": "Ballroom",
       "track": "keynote"
     },
     {
-      "time": "11:30 AM",
-      "title": "Workshop: AI in Robotics",
-      "speaker": "Prof. Maria Rodriguez",
-      "location": "Engineering Room 204",
-      "track": "workshop"
+      "time": "9:30 AM",
+      "title": "Digital Detectives: AI & the Future of Forensics",
+      "speaker": "Mona Salvi, Fionne Liu, Xiuduan Fang",
+      "location": "Room 4A",
+      "track": "AI"
     },
     {
-      "time": "1:00 PM",
-      "title": "Lunch & Networking",
+      "time": "9:30 AM",
+      "title": "Beyond Reality: The Future of XR",
+      "speaker": "Julie Willey (Google), LP Peterson (Apple)",
+      "location": "Room 2A",
+      "track": "Tech"
+    },
+    {
+      "time": "9:30 AM",
+      "title": "Humanoid AI-Driven Automation",
+      "speaker": "Yolanda Du, Hannah Wu (Intbot)",
+      "location": "Room 3",
+      "track": "Automation"
+    },
+    {
+      "time": "9:30 AM",
+      "title": "The Future of Sustainable Energy Storage",
+      "speaker": "Crystal Jain (Form Energy), Hitisha Sharma",
+      "location": "Room 2B",
+      "track": "Sustainability"
+    },
+    {
+      "time": "9:30 AM",
+      "title": "Job & Internship Search",
+      "speaker": "Kelly Masegian",
+      "location": "Room 1",
+      "track": "Career"
+    },
+    {
+      "time": "9:30 AM",
+      "title": "Professional Branding",
+      "speaker": "Kiran Guleria, Sherry Moore (Google)",
+      "location": "Room 4B",
+      "track": "Career"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Reimagining the Future with Generative AI",
+      "speaker": "Brandi Ransom (IBM), Ankita Deshmukh (Google), Anahita Bhiwandiwalla (NVIDIA)",
+      "location": "Room 3",
+      "track": "AI"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Robotics Beyond Boundaries",
+      "speaker": "Neeta Mhatre (Intuitive Surgical), Leena Agarwal (Toyota)",
+      "location": "Room 2A",
+      "track": "Tech"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Automation in Biotech",
+      "speaker": "Sarah Thomson (Agilent), Kelli Sum (Intuitive), Shruthi Srinivasan (Abbott)",
+      "location": "Room 4A",
+      "track": "Automation"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Next-Gen Urban Transportation",
+      "speaker": "Maria Gonzalez (Archer), Kristen Holtz (Skydio), Aishwarya Parasuram (Waymo)",
+      "location": "Room 2B",
+      "track": "Sustainability"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Employer Perspective: Job & Internship Success",
+      "speaker": "Pallavi Joshi (Marvell), Angie Krackeler (IBM), Navya Agarwal (Adobe)",
+      "location": "Room 1",
+      "track": "Career"
+    },
+    {
+      "time": "10:50 AM",
+      "title": "Using Generative AI to Enhance Resumes",
+      "speaker": "Kristin Keller (SJSU), Thuy Nguyen (SJSU)",
+      "location": "Room 4B",
+      "track": "Career"
+    },
+    {
+      "time": "11:50 AM",
+      "title": "Lunch",
       "speaker": "",
       "location": "Student Union Dining",
       "track": "general"
     },
     {
-      "time": "2:00 PM",
-      "title": "Panel: Women Leading Innovation",
-      "speaker": "Multiple panelists",
-      "location": "Ballroom A",
+      "time": "12:30 PM",
+      "title": "Afternoon Keynote",
+      "speaker": "Joumana Zeid, VP Program Leadership, Mirum Pharmaceuticals",
+      "location": "Ballroom",
+      "track": "keynote"
+    },
+    {
+      "time": "1:00 PM",
+      "title": "Roundtable Discussions",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "general"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "Responsible AI",
+      "speaker": "Vinita Jain (Amazon), Mrinal Karvir (Intel), Mamta Mathur",
+      "location": "Room 1",
+      "track": "AI"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "UX & Wearable Technology",
+      "speaker": "Kristine Kohn (PGE), Jennifer Shuang (Google), Cady Xu (Google DeepMind)",
+      "location": "Room 3",
+      "track": "Tech"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "Intelligent Additive Manufacturing",
+      "speaker": "Rachel Chen (HP), Aja Hartman (Align Technology), Mary Baker (Palace3D)",
+      "location": "Room 2B",
+      "track": "Automation"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "Sustainable Resilience & Urban Planning",
+      "speaker": "Dilan Roe (Alameda County), Danielle Del Rosario, Melanie Carrido",
+      "location": "Room 2A",
+      "track": "Sustainability"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "Elevator Pitch Workshop",
+      "speaker": "Kristin Keller",
+      "location": "Room 4A",
+      "track": "Career"
+    },
+    {
+      "time": "1:45 PM",
+      "title": "Own the Interview Workshop",
+      "speaker": "Bobbi Makani",
+      "location": "Room 4B",
+      "track": "Career"
+    },
+    {
+      "time": "3:05 PM",
+      "title": "Career Panel: Software & IT",
+      "speaker": "Viji Krishnamurthy (Oracle), Linda Fu (Google), Prerna Totla (Quizlet), Snehal Kharat (Apple)",
+      "location": "Room 1",
       "track": "panel"
     },
     {
-      "time": "4:00 PM",
-      "title": "Poster Session & Award Ceremony",
+      "time": "3:05 PM",
+      "title": "Career Panel: Semiconductors & Electronics",
+      "speaker": "Anisha Seli (Analog Devices), Zhan Yu (Marvell), Radhika Shankar (Synopsys), Christina Wang (KLA)",
+      "location": "Room 4A",
+      "track": "panel"
+    },
+    {
+      "time": "3:05 PM",
+      "title": "Career Panel: Mechanical Engineering & Mechatronics",
+      "speaker": "Ou Li (UTAC), Geraldine Vasquez Coetzee (Applied Materials), Gargi Kailkhura (Arista), Paridhi Desai (Muon Space)",
+      "location": "Room 2B",
+      "track": "panel"
+    },
+    {
+      "time": "3:05 PM",
+      "title": "Career Panel: Building, Infrastructure & Environment",
+      "speaker": "Africa Espina (Locus Environmental), Karla Talisse (SoSheBuilds), Dilan Roe, Danielle Del Rosario",
+      "location": "Room 2A",
+      "track": "panel"
+    },
+    {
+      "time": "3:05 PM",
+      "title": "Career Panel: Biotech & Biomedical Engineering",
+      "speaker": "Ekta Mahajan (Gilead), Sandra Melo (Genentech), Isadora McCullough (Agilent), Farah Rahhal (Abbott)",
+      "location": "Room 3",
+      "track": "panel"
+    },
+    {
+      "time": "3:05 PM",
+      "title": "Career Panel: Aeronautics, Aerospace & Aviation",
+      "speaker": "Maria Gonzalez (Archer), Kristen Holtz (Skydio), Jaya Bajpayee (NASA Ames), Tara Samuels (NASA Ames)",
+      "location": "Room 4B",
+      "track": "panel"
+    },
+    {
+      "time": "4:45 PM",
+      "title": "Innovation Showcase",
       "speaker": "",
       "location": "Student Union Ballroom",
       "track": "general"
@@ -132,22 +306,16 @@
   ],
   "speakers": [
     {
-      "name": "Dr. Sarah Chen",
-      "title": "Senior Principal Engineer, Google Robotics",
-      "bio": "Dr. Chen leads the perception team at Google Robotics, focusing on embodied AI and human-robot interaction.",
-      "photoAsset": "speaker_chen.jpg"
+      "name": "Ashraf Karim",
+      "title": "Sr. VP Customer Experience & Technology, ServiceNow",
+      "bio": "Opening keynote speaker. Leads customer experience and technology strategy at ServiceNow.",
+      "photoAsset": "speaker_karim.jpg"
     },
     {
-      "name": "Prof. Maria Rodriguez",
-      "title": "Associate Professor, SJSU Electrical Engineering",
-      "bio": "Prof. Rodriguez runs the Intelligent Systems Lab at SJSU. Her research spans reinforcement learning and accessible robotics.",
-      "photoAsset": "speaker_rodriguez.jpg"
-    },
-    {
-      "name": "Dr. Aisha Patel",
-      "title": "Co-Founder & CTO, Autonomy Labs",
-      "bio": "Dr. Patel co-founded Autonomy Labs, building autonomous inspection robots for industrial applications.",
-      "photoAsset": "speaker_patel.jpg"
+      "name": "Joumana Zeid",
+      "title": "Vice President of Program Leadership, Mirum Pharmaceuticals",
+      "bio": "Afternoon keynote speaker. VP of Program Leadership at Mirum Pharmaceuticals.",
+      "photoAsset": "speaker_zeid.jpg"
     }
   ]
 }

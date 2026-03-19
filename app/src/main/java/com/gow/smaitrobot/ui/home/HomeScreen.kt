@@ -1,5 +1,7 @@
 package com.gow.smaitrobot.ui.home
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,16 +15,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,12 +57,10 @@ import com.gow.smaitrobot.ui.common.TopLogoBar
  * Home screen — the primary landing screen on Jackie's kiosk display.
  *
  * Layout (top to bottom):
- * 1. [TopLogoBar] — SJSU + BioRob logos, 80dp height
+ * 1. [TopLogoBar] — SJSU + BioRob logos
  * 2. Event name (32sp bold) + tagline (20sp)
- * 3. Card grid — 3-column grid with larger cards (120dp min height), icon + label + description
+ * 3. Card grid — 3-column grid of solid-color cards (iFLYTEK-inspired)
  * 4. [SponsorBar] — sponsor logos at the bottom
- *
- * Cards are the primary navigation — no bottom nav bar.
  */
 @Composable
 fun HomeScreen(
@@ -67,6 +72,7 @@ fun HomeScreen(
     val eventName by viewModel.eventName.collectAsStateWithLifecycle()
     val tagline by viewModel.tagline.collectAsStateWithLifecycle()
     val sponsors by viewModel.sponsors.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     var inlineContentKey by remember { mutableStateOf<String?>(null) }
 
@@ -99,16 +105,16 @@ fun HomeScreen(
             )
         }
 
-        // 3. Card grid — bigger cards with descriptions
+        // 3. Card grid — solid color cards
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 20.dp),
             contentPadding = PaddingValues(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(cards) { card ->
                 HomeCard(
@@ -128,6 +134,10 @@ fun HomeScreen(
                             }
                             is CardAction.ShowInlineContent -> {
                                 inlineContentKey = action.contentKey
+                            }
+                            is CardAction.OpenUrl -> {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(action.url))
+                                context.startActivity(intent)
                             }
                         }
                     }
@@ -149,8 +159,8 @@ fun HomeScreen(
 }
 
 /**
- * Home screen card — larger with icon, label, and description.
- * Min height 120dp for visual weight as primary navigation.
+ * Home screen card — solid color background, white text, rounded corners.
+ * Inspired by iFLYTEK Jackie default app design.
  */
 @Composable
 private fun HomeCard(
@@ -158,41 +168,45 @@ private fun HomeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    ElevatedCard(
+    Card(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 120.dp)
+            .heightIn(min = 130.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF5BA0D9)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = cardIcon(card.icon),
                 contentDescription = card.label,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .size(36.dp)
-                    .padding(bottom = 8.dp)
+                tint = Color.White.copy(alpha = 0.9f),
+                modifier = Modifier.size(32.dp)
             )
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = card.label,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
                 maxLines = 2
             )
             if (card.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = card.description,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
+                    text = "\"${card.description}\"",
+                    color = Color.White.copy(alpha = 0.75f),
+                    fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -210,6 +224,7 @@ private fun cardIcon(iconName: String): ImageVector = when (iconName) {
     "location" -> Icons.Filled.LocationOn
     "info" -> Icons.Filled.Info
     "settings" -> Icons.Filled.Settings
+    "web" -> Icons.Filled.Language
     else -> Icons.Filled.Info
 }
 

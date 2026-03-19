@@ -31,6 +31,13 @@ sealed class CardAction {
      * @param contentKey  The content identifier (e.g. "keynote", "sessions").
      */
     data class ShowInlineContent(val contentKey: String) : CardAction()
+
+    /**
+     * Open an external URL in the browser.
+     *
+     * @param url  The URL to open.
+     */
+    data class OpenUrl(val url: String) : CardAction()
 }
 
 /**
@@ -113,6 +120,7 @@ class HomeViewModel(
                 }
                 CardAction.NavigateToTab(screen)
             }
+            "url" -> CardAction.OpenUrl(target)
             "inline" -> CardAction.ShowInlineContent(target)
             else -> CardAction.ShowInlineContent(action)
         }
