@@ -97,8 +97,7 @@ fun ConversationScreen(
             SubScreenTopBar(
                 title = "Chat with Jackie",
                 onBack = {
-                    viewModel.onScreenExited()
-                    navController.popBackStack()
+                    viewModel.onBackPressed()
                 }
             )
 

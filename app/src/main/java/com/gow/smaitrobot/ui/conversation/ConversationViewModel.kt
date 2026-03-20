@@ -153,7 +153,22 @@ class ConversationViewModel(
     }
 
     /**
-     * Called when user presses back or leaves ConversationScreen.
+     * Called when user presses back button. If conversation happened, shows survey.
+     * Otherwise navigates straight home.
+     */
+    fun onBackPressed() {
+        if (wasConversing) {
+            _showSurvey.value = true
+        } else {
+            endSession()
+            scope.launch {
+                _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
+            }
+        }
+    }
+
+    /**
+     * Called when leaving ConversationScreen (DisposableEffect).
      * Ends the server session and clears local state. Safe to call multiple times.
      */
     fun onScreenExited() {
