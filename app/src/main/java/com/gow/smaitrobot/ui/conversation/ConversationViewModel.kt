@@ -136,6 +136,14 @@ class ConversationViewModel(
     // -- Public API --
 
     /**
+     * Called when ConversationScreen appears. Ensures server has an active session.
+     * Safe to call multiple times — sends session_command/start each time.
+     */
+    fun onScreenEntered() {
+        sendSessionCommand("start")
+    }
+
+    /**
      * Submit the post-session survey and return to Home.
      * Sends survey JSON to server, then session_command("end"), clears transcript, navigates home.
      */

@@ -54,6 +54,11 @@ fun ConversationScreen(
 
     val listState = rememberLazyListState()
 
+    // Send session_command/start every time this screen appears
+    LaunchedEffect(Unit) {
+        viewModel.onScreenEntered()
+    }
+
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
