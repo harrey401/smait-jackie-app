@@ -95,6 +95,9 @@ class ConversationViewModel(
      */
     private var wasConversing = false
 
+    /** True while a session is active; prevents double session_command/end. */
+    private var sessionActive = false
+
     // -- Navigation state --
 
     private var isNavigating = false
@@ -136,11 +139,30 @@ class ConversationViewModel(
     // -- Public API --
 
     /**
-     * Called when ConversationScreen appears. Ensures server has an active session.
-     * Safe to call multiple times — sends session_command/start each time.
+     * Called when ConversationScreen appears. Starts a fresh session:
+     * clears old transcript, resets state, tells server to start.
      */
     fun onScreenEntered() {
+        clearTranscript()
+        _robotState.value = RobotState.IDLE
+        _showSurvey.value = false
+        _showCamera.value = false
+        sessionActive = true
         sendSessionCommand("start")
+        resetSilenceTimer()
+    }
+
+    /**
+     * Called when user presses back or leaves ConversationScreen.
+     * Ends the server session and clears local state. Safe to call multiple times.
+     */
+    fun onScreenExited() {
+        if (sessionActive) {
+            sendSessionCommand("end")
+            sessionActive = false
+        }
+        clearTranscript()
+        silenceJob?.cancel()
     }
 
     /**
@@ -150,9 +172,7 @@ class ConversationViewModel(
     fun submitSurvey(survey: SurveyData) {
         val json = buildSurveyJson(survey)
         wsRepo.send(json)
-        sendSessionCommand("end")
-        _showSurvey.value = false
-        clearTranscript()
+        endSession()
         scope.launch {
             _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
         }
@@ -165,12 +185,21 @@ class ConversationViewModel(
     fun dismissSurvey(survey: SurveyData) {
         val json = buildSurveyJson(survey)
         wsRepo.send(json)
-        sendSessionCommand("end")
-        _showSurvey.value = false
-        clearTranscript()
+        endSession()
         scope.launch {
             _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
         }
+    }
+
+    /** End the current session: tell server, clear state, mark inactive. */
+    private fun endSession() {
+        if (sessionActive) {
+            sendSessionCommand("end")
+            sessionActive = false
+        }
+        _showSurvey.value = false
+        clearTranscript()
+        silenceJob?.cancel()
     }
 
     /** Toggle the selfie camera overlay. */
@@ -351,8 +380,7 @@ class ConversationViewModel(
         silenceJob = scope.launch {
             delay(SILENCE_TIMEOUT_MS)
             Log.d(TAG, "Silence timeout -- ending session and returning to Home")
-            sendSessionCommand("end")
-            clearTranscript()
+            endSession()
             _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
         }
     }
