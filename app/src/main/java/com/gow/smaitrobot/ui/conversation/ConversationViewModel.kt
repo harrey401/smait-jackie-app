@@ -127,8 +127,6 @@ class ConversationViewModel(
                     is WebSocketEvent.BinaryFrame -> handleBinaryFrame(event.bytes)
                     is WebSocketEvent.Connected -> {
                         Log.d(TAG, "WS connected")
-                        // Send session start AFTER connection is established
-                        sendSessionCommand("start")
                     }
                     is WebSocketEvent.Disconnected -> Log.d(TAG, "WS disconnected: ${event.reason}")
                 }
