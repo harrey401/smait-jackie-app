@@ -111,9 +111,6 @@ class ConversationViewModel(
             wsRepo.send(bytes)
         }
 
-        // Tell server to start a conversation session
-        sendSessionCommand("start")
-
         // Start silence timeout
         resetSilenceTimer()
 
@@ -125,7 +122,11 @@ class ConversationViewModel(
                 when (event) {
                     is WebSocketEvent.JsonMessage -> handleJsonMessage(event)
                     is WebSocketEvent.BinaryFrame -> handleBinaryFrame(event.bytes)
-                    is WebSocketEvent.Connected -> Log.d(TAG, "WS connected")
+                    is WebSocketEvent.Connected -> {
+                        Log.d(TAG, "WS connected")
+                        // Send session start AFTER connection is established
+                        sendSessionCommand("start")
+                    }
                     is WebSocketEvent.Disconnected -> Log.d(TAG, "WS disconnected: ${event.reason}")
                 }
             }
