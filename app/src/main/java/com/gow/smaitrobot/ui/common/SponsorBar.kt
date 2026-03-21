@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.layout
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -109,6 +110,7 @@ private fun MarqueeRow(
         LogoStrip(
             sponsors = sponsors,
             modifier = Modifier
+                .unboundedWidth()
                 .onSizeChanged { stripWidthPx = it.width }
                 .graphicsLayer {
                     translationX = offsetFraction * stripWidthPx
@@ -120,6 +122,7 @@ private fun MarqueeRow(
             LogoStrip(
                 sponsors = sponsors,
                 modifier = Modifier
+                    .unboundedWidth()
                     .graphicsLayer {
                         translationX = stripWidthPx + (offsetFraction * stripWidthPx)
                     }
@@ -143,7 +146,7 @@ private fun LogoStrip(
         sponsors.forEach { sponsor ->
             SponsorLogo(
                 sponsor = sponsor,
-                modifier = Modifier.padding(horizontal = 32.dp)
+                modifier = Modifier.padding(horizontal = 56.dp)
             )
         }
     }
@@ -172,14 +175,20 @@ private fun SponsorLogo(
     } else if (sponsor.name.isNotEmpty()) {
         androidx.compose.material3.Text(
             text = sponsor.name,
-            modifier = modifier
-                .widthIn(max = 300.dp)
-                .padding(horizontal = 8.dp),
-            fontSize = 14.sp,
+            modifier = modifier.padding(horizontal = 12.dp),
+            fontSize = 48.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            maxLines = 2
+            maxLines = 1,
+            softWrap = false
         )
+    }
+}
+
+/** Remove the parent's max-width constraint so the Row measures at its full content width. */
+private fun Modifier.unboundedWidth() = this.layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(maxWidth = 100_000))
+    layout(placeable.width, placeable.height) {
+        placeable.place(0, 0)
     }
 }

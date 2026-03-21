@@ -44,6 +44,10 @@
   ],
   "sponsors": [
     {
+      "name": "Mark and Carolyn Guidry Women in Engineering Program Fund",
+      "logoAsset": ""
+    },
+    {
       "name": "Google",
       "logoAsset": "sponsor_google.png"
     },
@@ -82,10 +86,6 @@
     {
       "name": "Quizlet",
       "logoAsset": "sponsor_quizlet.png"
-    },
-    {
-      "name": "Mark and Carolyn Guidry Women in Engineering Program Fund",
-      "logoAsset": ""
     }
   ],
   "schedule": [
