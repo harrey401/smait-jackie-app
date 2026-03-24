@@ -190,6 +190,27 @@ class CaeAudioManager(private val context: Context) {
     }
 
     /**
+     * Optional text writer callback for JSON text frame delivery.
+     *
+     * When set, DOA JSON text frames are forwarded to this callback instead of direct webSocket.
+     * This ensures DOA works in ViewModel mode where [WebSocketRepository] owns the WebSocket.
+     *
+     * Used by [ConversationViewModel] to wire CaeAudioManager DOA into [WebSocketRepository]:
+     * ```kotlin
+     * caeAudioManager.setTextWriterCallback { json -> wsRepo.send(json) }
+     * ```
+     */
+    private var textWriterCallback: ((String) -> Unit)? = null
+
+    /**
+     * Set the text writer callback for outbound JSON text frames (e.g., DOA angle).
+     * Called from ConversationViewModel's init block alongside [setWriterCallback].
+     */
+    fun setTextWriterCallback(callback: (String) -> Unit) {
+        textWriterCallback = callback
+    }
+
+    /**
      * Copy CAE model/config files from assets to /sdcard/cae/
      * Must be called once before first use (e.g., in onCreate).
      * Safe to call multiple times — skips files that already exist.
@@ -370,12 +391,16 @@ class CaeAudioManager(private val context: Context) {
      * Send DOA angle as JSON text WebSocket frame.
      * Format: {"type":"doa","angle":N,"beam":N}
      *
+     * Delivers to [textWriterCallback] if set (ViewModel/Repository pattern), otherwise
+     * falls through to direct [webSocket] send (legacy mode).
+     *
      * Uses WebSocket.send(String) — text frame, NOT binary.
      * (FIX 2: was binary ByteBuffer with 0x03 type byte on branch)
      */
     private fun sendDoaAngle(angle: Int, beam: Int) {
         try {
-            webSocket?.send(buildDoaJson(angle, beam))
+            val json = buildDoaJson(angle, beam)
+            textWriterCallback?.invoke(json) ?: webSocket?.send(json)
         } catch (e: Exception) {
             Log.e(TAG, "Send DOA error", e)
         }
