@@ -34,6 +34,8 @@ import com.gow.smaitrobot.ui.home.HomeViewModel
 import com.gow.smaitrobot.ui.navigation_map.NavigationMapScreen
 import com.gow.smaitrobot.ui.navigation_map.NavigationMapViewModel
 import com.gow.smaitrobot.ui.settings.SettingsScreen
+import com.gow.smaitrobot.follow.FollowController
+import com.gow.smaitrobot.ui.follow.FollowScreen
 
 private const val TAG = "AppNavigation"
 
@@ -93,6 +95,20 @@ fun AppScaffold(
             ttsPlayer = ttsPlayer,
             caeAudioManager = caeAudioManager,
             videoStreamManager = videoStreamManager
+        )
+    }
+    val followController = remember {
+        FollowController(
+            chassisSender = { json ->
+                // Route through chassis proxy: wrap as chassis_cmd for the server protocol
+                val envelope = org.json.JSONObject().apply {
+                    put("type", "chassis_cmd")
+                    put("payload", org.json.JSONObject(json))
+                }
+                // Send directly to chassis proxy (bypasses server)
+                context.jackieApp.chassisProxy?.forwardToChassisRaw(json)
+                    ?: Log.w("AppNavigation", "FollowController: no ChassisProxy — cmd_vel dropped")
+            }
         )
     }
 
@@ -178,6 +194,9 @@ fun AppScaffold(
         }
         composable<Screen.Settings> {
             SettingsScreen(navController = navController)
+        }
+        composable<Screen.Follow> {
+            FollowScreen(followController = followController, navController = navController)
         }
     }
 }

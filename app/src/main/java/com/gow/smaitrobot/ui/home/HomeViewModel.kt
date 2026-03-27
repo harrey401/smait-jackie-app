@@ -109,6 +109,7 @@ class HomeViewModel(
                     "eventinfo" -> Screen.EventInfo
                     "home" -> Screen.Home
                     "settings" -> Screen.Settings
+                    "follow" -> Screen.Follow
                     else -> return CardAction.ShowInlineContent(action)
                 }
                 CardAction.NavigateToTab(screen)

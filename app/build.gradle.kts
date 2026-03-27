@@ -85,6 +85,14 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // MediaPipe Face Landmarker (Follow Mode)
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
+
+    // CameraX (Follow Mode — on-device face tracking camera)
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.turbine)

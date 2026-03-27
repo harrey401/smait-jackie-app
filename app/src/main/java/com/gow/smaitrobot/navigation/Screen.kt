@@ -59,4 +59,10 @@ sealed class Screen {
         override val label: String = "Settings"
         override val iconName: String = "Settings"
     }
+
+    @Serializable
+    object Follow : Screen() {
+        override val label: String = "Follow Me"
+        override val iconName: String = "DirectionsWalk"
+    }
 }
