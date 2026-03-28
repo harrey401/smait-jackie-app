@@ -9,9 +9,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gow.smaitrobot"
-        minSdk = 23
-        targetSdk = 35
+        applicationId = "com.robot.follower"
+        minSdk = 24        // ← change from 23 to 24
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
