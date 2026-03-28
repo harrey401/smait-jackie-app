@@ -9,9 +9,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.gow.smaitrobot"
-        minSdk = 23
-        targetSdk = 35
+        applicationId = "com.robot.follower"
+        minSdk = 24        // ← change from 23 to 24
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -84,6 +84,14 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // MediaPipe Face Landmarker (Follow Mode)
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
+
+    // CameraX (Follow Mode — on-device face tracking camera)
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
 
     // Tests
     testImplementation(libs.junit)
