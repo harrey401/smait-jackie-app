@@ -77,7 +77,8 @@ fun FollowScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        SubScreenTopBar(title = "Follow Mode", navController = navController)
+//        SubScreenTopBar(title = "Follow Mode", navController = navController)
+        SubScreenTopBar(title = "Follow Mode", onBack = { navController.popBackStack() })
 
         Column(
             modifier = Modifier
