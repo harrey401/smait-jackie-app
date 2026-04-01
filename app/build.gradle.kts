@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.gow.smaitrobot"
-        minSdk = 23
+        minSdk = 24 // changed from 23 to 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"

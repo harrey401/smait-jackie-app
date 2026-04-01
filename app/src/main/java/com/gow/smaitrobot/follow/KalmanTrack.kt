@@ -1,6 +1,7 @@
 package com.gow.smaitrobot.follow
 
 import android.graphics.Rect
+import kotlin.collections.get
 
 /**
  * Kalman-filtered face track for DeepSORT.
@@ -32,6 +33,14 @@ class KalmanTrack(detection: Rect) {
         x[3] = detection.height().toDouble()
         for (i in 0 until 8) p[i][i] = if (i < 4) 10.0 else 1000.0
     }
+
+
+    /** Estimated horizontal velocity in pixels/frame */
+    fun velocityX(): Double = x[4]
+
+    /** Estimated vertical velocity in pixels/frame */
+    fun velocityY(): Double = x[5]
+
 
     fun predict() {
         val xp = matVec(F, x)
@@ -179,3 +188,4 @@ internal fun inv4(m: Array<DoubleArray>): Array<DoubleArray> {
     for (i in 0 until n) for (j in 0 until n) inv[i][j] = a[i][j + n]
     return inv
 }
+
