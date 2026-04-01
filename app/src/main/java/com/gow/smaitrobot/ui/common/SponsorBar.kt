@@ -83,10 +83,17 @@ private fun MarqueeRow(
     sponsors: List<SponsorConfig>,
     modifier: Modifier = Modifier
 ) {
+    // Repeat the list so one strip is always wider than the viewport.
+    // With 4 sponsors and generous padding, 2x may barely fit — 3x guarantees overlap.
+    val repeatedSponsors = remember(sponsors) {
+        val reps = if (sponsors.size < 6) 3 else 2
+        (1..reps).flatMap { sponsors }
+    }
+
     // Width of one full set of logos (measured from the first strip)
     var stripWidthPx by remember { mutableIntStateOf(0) }
 
-    val durationMs = sponsors.size * 3500
+    val durationMs = repeatedSponsors.size * 3500
 
     val infiniteTransition = rememberInfiniteTransition(label = "marquee")
     val offsetFraction by infiniteTransition.animateFloat(
@@ -108,7 +115,7 @@ private fun MarqueeRow(
     ) {
         // Strip 1 — also used to measure the exact width of one set
         LogoStrip(
-            sponsors = sponsors,
+            sponsors = repeatedSponsors,
             modifier = Modifier
                 .unboundedWidth()
                 .onSizeChanged { stripWidthPx = it.width }
@@ -120,7 +127,7 @@ private fun MarqueeRow(
         // Strip 2 — positioned exactly one stripWidth to the right of strip 1
         if (stripWidthPx > 0) {
             LogoStrip(
-                sponsors = sponsors,
+                sponsors = repeatedSponsors,
                 modifier = Modifier
                     .unboundedWidth()
                     .graphicsLayer {

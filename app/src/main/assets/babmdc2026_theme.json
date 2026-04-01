@@ -1,6 +1,6 @@
 {
   "eventName": "BABMDC 2026",
-  "tagline": "Bay Area Biomedical Device Conference",
+  "tagline": "Intelligent, Inclusive and Responsible Innovation in Healthcare",
   "logoAsset": "babmdc_logo.png",
   "colors": {
     "primary": "#376137",
@@ -66,138 +66,246 @@
   ],
   "schedule": [
     {
-      "time": "8:00 AM",
+      "time": "7:45 AM",
       "title": "Registration & Breakfast",
       "speaker": "",
       "location": "Student Union Lobby",
       "track": "general"
     },
     {
-      "time": "9:00 AM",
-      "title": "Welcome & Opening Remarks",
-      "speaker": "SJSU BMES",
-      "location": "Student Union Ballroom",
+      "time": "8:30 AM",
+      "title": "Conference Opening",
+      "speaker": "",
+      "location": "Ballroom",
       "track": "general"
     },
     {
-      "time": "9:15 AM",
-      "title": "Accounting for AI in Future BME Careers",
-      "speaker": "Dr. Kate Stephenson, Founder, Dyad Engineering",
-      "location": "Student Union Ballroom",
-      "track": "keynote"
+      "time": "8:35 AM",
+      "title": "Welcome",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "general"
+    },
+    {
+      "time": "8:40 AM",
+      "title": "Opportunities and Challenges for Critical Care Clinical Decision Support",
+      "speaker": "Dr. Yao Sun, Professor of Pediatrics, UCSF",
+      "location": "Ballroom",
+      "track": "plenary"
+    },
+    {
+      "time": "9:20 AM",
+      "title": "Startup Pitches",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "general"
     },
     {
       "time": "10:00 AM",
-      "title": "From Concept to Clinic: Building the Evidence That Brings Devices to Patients",
-      "speaker": "Dr. Janie Mandrusov, VP Clinical Affairs, VahatiCor",
-      "location": "Student Union Ballroom",
-      "track": "clinical"
-    },
-    {
-      "time": "10:45 AM",
-      "title": "Performance and Safety Verification for Robotic Medical Devices",
-      "speaker": "Brian Crews, Staff Hardware Test Engineer, Intuitive",
-      "location": "Student Union Ballroom",
-      "track": "robotics"
-    },
-    {
-      "time": "11:30 AM",
-      "title": "Bringing Medical Devices to Market in 2026",
-      "speaker": "Barry Schnur, President & CEO, David Schnur Associates",
-      "location": "Student Union Ballroom",
-      "track": "industry"
-    },
-    {
-      "time": "12:15 PM",
-      "title": "Lunch & Poster Session",
+      "title": "Break I",
       "speaker": "",
-      "location": "Student Union Ballroom",
+      "location": "",
       "track": "general"
     },
     {
-      "time": "1:30 PM",
-      "title": "Building Healthcare Software That Matters: Integrating Technology, Regulation, and Science",
-      "speaker": "Alma Lopez, Senior Technical Product Manager, Roche",
-      "location": "Student Union Ballroom",
-      "track": "software"
+      "time": "10:30 AM",
+      "title": "From Concept to Clinic: Building the Evidence That Brings Devices to Patients",
+      "speaker": "Dr. Janie Mandrusov, T45 Labs",
+      "location": "Ballroom",
+      "track": "session1"
     },
     {
-      "time": "2:15 PM",
-      "title": "Deep Brain Stimulation for Neuropsychiatric Disorders",
+      "time": "10:30 AM",
+      "title": "Learning to Dance while the Steps Change: How to Launch Engineering Careers in Times of Rapid Technical Innovation",
+      "speaker": "Dr. Kate Stephenson, Founder, Dyad Engineering",
+      "location": "Ballroom",
+      "track": "session1"
+    },
+    {
+      "time": "10:30 AM",
+      "title": "What It Means to be a Leader in Medical Devices in 2026",
+      "speaker": "Scott Nierotka, Medical Device Executive",
+      "location": "Ballroom",
+      "track": "session1"
+    },
+    {
+      "time": "10:30 AM",
+      "title": "From Lab to Market: Practical IP and Governance for Connected Devices",
+      "speaker": "Soody Tronson, Managing Counsel, STLG Law Firm",
+      "location": "Studio Room 1",
+      "track": "session2"
+    },
+    {
+      "time": "10:30 AM",
+      "title": "Building Healthcare Software That Matters: Integrating Technology, Regulation, and Science",
+      "speaker": "Alma Lopez, Senior Technical Product Manager, Roche",
+      "location": "Studio Room 1",
+      "track": "session2"
+    },
+    {
+      "time": "11:30 AM",
+      "title": "Poster Competition",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "general"
+    },
+    {
+      "time": "12:00 PM",
+      "title": "Lunch",
+      "speaker": "",
+      "location": "",
+      "track": "general"
+    },
+    {
+      "time": "1:20 PM",
+      "title": "Plenary Speaker II",
+      "speaker": "Andre Lindkvist, Abbott Diabetes Care",
+      "location": "Ballroom",
+      "track": "plenary"
+    },
+    {
+      "time": "2:00 PM",
+      "title": "The Usability Gap: Aligning Breast Pump Innovation with Human Reality",
+      "speaker": "Cassi Janakos, COO & Co-founder, Healthy Horizons",
+      "location": "Ballroom",
+      "track": "session3"
+    },
+    {
+      "time": "2:00 PM",
+      "title": "Driving Diagnostics: Velocity versus Validation in the Age of AI",
+      "speaker": "Dr. Priya Balachandran, Atzeyo Biosensors",
+      "location": "Ballroom",
+      "track": "session3"
+    },
+    {
+      "time": "2:00 PM",
+      "title": "Hormonal Regulation of Heart Muscle Proliferation and Regeneration",
+      "speaker": "Dr. Alexander Payumo, Associate Professor, SJSU",
+      "location": "Studio Room 1",
+      "track": "session4"
+    },
+    {
+      "time": "2:00 PM",
+      "title": "Deep Brain Stimulation for Neuropsychiatric Disorders: Adaptive Devices to New Indications",
       "speaker": "Dr. Kristin Sellers, Assistant Professor, UCSF",
-      "location": "Student Union Ballroom",
-      "track": "research"
+      "location": "Studio Room 1",
+      "track": "session4"
+    },
+    {
+      "time": "2:00 PM",
+      "title": "Bioadaptive Coronary Angioplasty: Clinical Rationale, Mechanistic Insights, and Contemporary Outcomes",
+      "speaker": "Dr. Onur Dur, VP Clinical Science, Elixir Medical",
+      "location": "Studio Room 1",
+      "track": "session4"
     },
     {
       "time": "3:00 PM",
-      "title": "Hormonal Regulation of Heart Muscle Proliferation and Regeneration",
-      "speaker": "Dr. Alexander Payumo, Assistant Professor, San Jose State University",
-      "location": "Student Union Ballroom",
-      "track": "research"
-    },
-    {
-      "time": "3:45 PM",
-      "title": "The Usability Gap: Aligning Breast Pump Innovation with Human Reality",
-      "speaker": "Cassi Janakos, COO & Co-founder, Healthy Horizons",
-      "location": "Student Union Ballroom",
-      "track": "industry"
-    },
-    {
-      "time": "4:30 PM",
-      "title": "Closing Remarks & Networking",
+      "title": "Break II",
       "speaker": "",
-      "location": "Student Union Ballroom",
+      "location": "",
+      "track": "general"
+    },
+    {
+      "time": "3:30 PM",
+      "title": "Industry Panel",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "panel"
+    },
+    {
+      "time": "4:15 PM",
+      "title": "Alumni Panel",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "panel"
+    },
+    {
+      "time": "5:00 PM",
+      "title": "Poster Competition Awards & Closing",
+      "speaker": "",
+      "location": "Ballroom",
+      "track": "general"
+    },
+    {
+      "time": "5:15 PM",
+      "title": "Reception",
+      "speaker": "",
+      "location": "",
       "track": "general"
     }
   ],
   "speakers": [
     {
+      "name": "Dr. Yao Sun",
+      "title": "Professor of Pediatrics (Neonatology), UCSF",
+      "bio": "Director of Neonatology Community Services. Stanford undergrad, UCLA med school, MIT PhD in Computer Science. Research in clinical decision support for neonatal critical care.",
+      "photoAsset": "speaker_sun.jpg"
+    },
+    {
+      "name": "Andre Lindkvist",
+      "title": "Abbott Diabetes Care",
+      "bio": "Plenary speaker from Abbott Diabetes Care.",
+      "photoAsset": "speaker_lindkvist.jpg"
+    },
+    {
       "name": "Dr. Kate Stephenson",
-      "title": "Founder, Dyad Engineering",
-      "bio": "25+ years in med tech. Stanford MS & PhD in Engineering. Speaking on how AI will reshape biomedical engineering careers.",
+      "title": "Founder, Dyad Engineering; VP Engineering, Cern Corporation",
+      "bio": "25+ years in med tech. Stanford MS & PhD in Engineering. Specializes in translating medical technologies from concept to regulated products, especially women's health.",
       "photoAsset": "speaker_stephenson.jpg"
     },
     {
       "name": "Dr. Janie Mandrusov",
-      "title": "VP Clinical Affairs, VahatiCor",
-      "bio": "25+ years in cardiovascular technology with 16 patents. Expert in clinical evidence strategy for medical devices.",
+      "title": "T45 Labs",
+      "bio": "25+ years in cardiovascular technology with 16 patents. PhD Chemical Engineering from Columbia. SJSU BME Advisory Council member.",
       "photoAsset": "speaker_mandrusov.jpg"
     },
     {
-      "name": "Brian Crews",
-      "title": "Staff Hardware Test Engineer, Intuitive",
-      "bio": "10+ years in robotic medical systems. Specializes in performance and safety verification for surgical robots.",
-      "photoAsset": "speaker_crews.jpg"
+      "name": "Scott Nierotka",
+      "title": "Medical Device Executive",
+      "bio": "25+ years in medical devices. Most recently Director of Engineering at Lumenous Device Technologies. Founding member and former President of BMES industry chapter.",
+      "photoAsset": "speaker_nierotka.jpg"
     },
     {
-      "name": "Barry Schnur",
-      "title": "President & CEO, David Schnur Associates",
-      "bio": "30+ years in the medical device industry. Expert on regulatory pathways and commercialization strategy.",
-      "photoAsset": "speaker_schnur.jpg"
+      "name": "Soody Tronson",
+      "title": "Managing Counsel, STLG Law Firm",
+      "bio": "25+ years at the intersection of law, technology, and business. Former R&D engineer at HP and Schering-Plough. Patent prosecution and IP strategy.",
+      "photoAsset": "speaker_tronson.jpg"
     },
     {
       "name": "Alma Lopez",
-      "title": "Senior Technical Product Manager, Roche",
-      "bio": "Builds AI-enabled healthcare solutions at Roche. Focuses on the intersection of technology, regulation, and clinical science.",
+      "title": "Senior Technical Product Manager (Healthcare & AI), Roche",
+      "bio": "Builds AI-enabled and cloud-based healthcare solutions. Cross-functional global teams in regulated environments.",
       "photoAsset": "speaker_lopez.jpg"
-    },
-    {
-      "name": "Dr. Kristin Sellers",
-      "title": "Assistant Professor, UCSF",
-      "bio": "Researches intracranial electrical stimulation and deep brain stimulation for treating neuropsychiatric disorders.",
-      "photoAsset": "speaker_sellers.jpg"
-    },
-    {
-      "name": "Dr. Alexander Payumo",
-      "title": "Assistant Professor, San Jose State University",
-      "bio": "Cardiac regeneration researcher studying hormonal regulation of heart muscle proliferation.",
-      "photoAsset": "speaker_payumo.jpg"
     },
     {
       "name": "Cassi Janakos",
       "title": "COO & Co-founder, Healthy Horizons",
-      "bio": "Inc. Female Founders 500 honoree (2025). Advocates for human-centered medical device design.",
+      "bio": "Inc. Female Founders 500 (2025). Stevie Award for Social Change Maker of the Year. Advocates for human-centered medical device design.",
       "photoAsset": "speaker_janakos.jpg"
+    },
+    {
+      "name": "Dr. Priya Balachandran",
+      "title": "Atzeyo Biosensors",
+      "bio": "25+ years in deep tech and life sciences. CEO of Huddl Health, Chief Product Officer at Atzeyo Biosensors. Former Thermo Fisher.",
+      "photoAsset": "speaker_balachandran.jpg"
+    },
+    {
+      "name": "Dr. Alexander Payumo",
+      "title": "Associate Professor, Biological Sciences, SJSU",
+      "bio": "BS Chemistry from SJSU, PhD Stanford. Research in hormonal regulation of cardiomyocyte cell cycle for mammalian heart regeneration.",
+      "photoAsset": "speaker_payumo.jpg"
+    },
+    {
+      "name": "Dr. Kristin Sellers",
+      "title": "Assistant Professor, Neurological Surgery, UCSF",
+      "bio": "Research in intracranial electrical stimulation for neuropsychiatric disorders. Closed-loop neuromodulation clinical trials.",
+      "photoAsset": "speaker_sellers.jpg"
+    },
+    {
+      "name": "Dr. Onur Dur",
+      "title": "VP Clinical Science and Medical Affairs, Elixir Medical",
+      "bio": "15+ years in med-tech. 50+ peer-reviewed publications, 20+ patents. Focus on cardiovascular care and Class II/III devices.",
+      "photoAsset": "speaker_dur.jpg"
     }
   ]
 }
