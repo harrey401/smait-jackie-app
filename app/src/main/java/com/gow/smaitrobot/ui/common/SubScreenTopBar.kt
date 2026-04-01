@@ -66,3 +66,5 @@ fun SubScreenTopBar(
         }
     }
 }
+
+annotation class SubScreenTopBar
