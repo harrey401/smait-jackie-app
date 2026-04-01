@@ -1,7 +1,6 @@
 package com.gow.smaitrobot.navigation
 
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -19,7 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.gow.smaitrobot.CaeAudioManager
 import com.gow.smaitrobot.ChassisProxy
-import com.gow.smaitrobot.StandardAudioManager
+// StandardAudioManager removed — Jackie-only build
 import com.gow.smaitrobot.TtsAudioPlayer
 import com.gow.smaitrobot.data.model.ThemeConfig
 import com.gow.smaitrobot.jackieApp
@@ -47,9 +46,6 @@ private const val TAG = "AppNavigation"
  * - Emulator: 10.0.2.2 maps to the host machine's localhost
  * - Jackie: use the lab PC's IP address on the WiFi network
  */
-private const val EMULATOR_WS_URL = "ws://10.0.2.2:8765"
-private const val JACKIE_WS_URL = "ws://192.168.1.100:8765" // Override per-lab
-
 @Composable
 fun AppScaffold(
     navController: NavHostController,
@@ -58,7 +54,7 @@ fun AppScaffold(
     val context = LocalContext.current
     val wsRepo = context.jackieApp.webSocketRepository
     val themeRepo = context.jackieApp.themeRepository
-    val isEmulator = remember { isEmulatorDevice() }
+    // Jackie-only build — no emulator detection needed
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -90,7 +86,7 @@ fun AppScaffold(
     )
     val ttsPlayer = remember { context.jackieApp.ttsAudioPlayer }
     val caeAudioManager = remember { CaeAudioManager(context) }
-    val standardAudioManager = remember { if (isEmulator) StandardAudioManager() else null }
+    // No StandardAudioManager — Jackie uses CaeAudioManager only
     val videoStreamManager = remember { VideoStreamManager(wsRepo) }
     val conversationViewModel = remember {
         ConversationViewModel(
@@ -133,31 +129,25 @@ fun AppScaffold(
     val isConnected by wsRepo.isConnected.collectAsStateWithLifecycle()
     LaunchedEffect(isConnected) {
         if (isConnected) {
-            if (isEmulator) {
-                standardAudioManager?.setWriterCallback { bytes -> wsRepo.send(bytes) }
-                standardAudioManager?.start()
-                Log.i(TAG, "Started StandardAudioManager for emulator")
+            // Jackie: copy CAE assets and start beamformed audio
+            caeAudioManager.copyAssetsIfNeeded()
+            val ws = wsRepo.currentWebSocket
+            if (ws != null) {
+                caeAudioManager.start(ws)
+                Log.i(TAG, "Started CaeAudioManager for Jackie")
             } else {
-                // Jackie: copy CAE assets and start beamformed audio
-                caeAudioManager.copyAssetsIfNeeded()
-                val ws = wsRepo.currentWebSocket
-                if (ws != null) {
-                    caeAudioManager.start(ws)
-                    Log.i(TAG, "Started CaeAudioManager for Jackie")
-                } else {
-                    Log.w(TAG, "WebSocket connected but currentWebSocket is null")
-                }
-
-                // Start chassis proxy — bridges server ↔ chassis (192.168.20.22:9090)
-                val proxy = ChassisProxy(
-                    chassisUrl = "ws://192.168.20.22:9090",
-                    serverSender = { json: String -> wsRepo.send(json) }
-                )
-                proxy.connect()
-                context.jackieApp.chassisProxy = proxy
-                wsRepo.chassisProxy = proxy
-                Log.i(TAG, "Started ChassisProxy")
+                Log.w(TAG, "WebSocket connected but currentWebSocket is null")
             }
+
+            // Start chassis proxy — bridges server ↔ chassis (192.168.20.22:9090)
+            val proxy = ChassisProxy(
+                chassisUrl = "ws://192.168.20.22:9090",
+                serverSender = { json: String -> wsRepo.send(json) }
+            )
+            proxy.connect()
+            context.jackieApp.chassisProxy = proxy
+            wsRepo.chassisProxy = proxy
+            Log.i(TAG, "Started ChassisProxy")
             videoStreamManager.start(context)
             Log.i(TAG, "Started VideoStreamManager")
         }
@@ -166,7 +156,6 @@ fun AppScaffold(
     // Cleanup on dispose
     DisposableEffect(Unit) {
         onDispose {
-            standardAudioManager?.stop()
             caeAudioManager.stop()
             videoStreamManager.stop()
             wsRepo.disconnect()
@@ -219,20 +208,3 @@ fun AppScaffold(
     }
 }
 
-/**
- * Detects whether the app is running on an Android emulator.
- */
-private fun isEmulatorDevice(): Boolean {
-    return (Build.FINGERPRINT.startsWith("generic")
-            || Build.FINGERPRINT.startsWith("unknown")
-            || Build.MODEL.contains("google_sdk")
-            || Build.MODEL.contains("Emulator")
-            || Build.MODEL.contains("Android SDK built for x86")
-            || Build.MODEL.contains("sdk_gphone")
-            || Build.MANUFACTURER.contains("Genymotion")
-            || Build.BRAND.startsWith("generic")
-            || Build.DEVICE.startsWith("generic")
-            || Build.PRODUCT.contains("sdk")
-            || Build.HARDWARE.contains("goldfish")
-            || Build.HARDWARE.contains("ranchu"))
-}
