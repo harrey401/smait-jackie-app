@@ -304,26 +304,37 @@ class CaeAudioManager(private val context: Context) {
                 Log.w(TAG, "Could not set ALSA permissions (non-fatal): ${e.message}")
             }
 
-            // Create ALSA recorder instance for USB mic array (Bothlent UAC Dongle)
-            alsaRecorder = AlsaRecorder.createInstance(
-                PCM_CARD,
-                PCM_DEVICE,
-                PCM_CHANNELS,
-                PCM_SAMPLE_RATE,
-                PCM_PERIOD_SIZE,
-                PCM_PERIOD_COUNT,
-                PCM_FORMAT
-            )
-            alsaRecorder?.setLogShow(false)
+            // Create ALSA recorder and start with retry (device may need time after audioserver kill)
+            var started = false
+            for (attempt in 1..3) {
+                alsaRecorder = AlsaRecorder.createInstance(
+                    PCM_CARD,
+                    PCM_DEVICE,
+                    PCM_CHANNELS,
+                    PCM_SAMPLE_RATE,
+                    PCM_PERIOD_SIZE,
+                    PCM_PERIOD_COUNT,
+                    PCM_FORMAT
+                )
+                Log.i(TAG, "Attempt $attempt: AlsaRecorder instance=${alsaRecorder != null}")
+                alsaRecorder?.setLogShow(false)
 
-            // Start recording — audio flows: ALSA → adapter → CAE → onAudio callback
-            val result = alsaRecorder?.startRecording(pcmListener)
-            if (result == 0) {
-                isRunning.set(true)
-                Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz)")
-                sendCaeStatus(true)
-            } else {
-                Log.e(TAG, "ALSA recording failed to start: $result")
+                val result = alsaRecorder?.startRecording(pcmListener)
+                if (result == 0) {
+                    isRunning.set(true)
+                    Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz) on attempt $attempt")
+                    sendCaeStatus(true)
+                    started = true
+                    break
+                } else {
+                    Log.e(TAG, "ALSA attempt $attempt failed: $result")
+                    try { alsaRecorder?.stopRecording() } catch (_: Exception) {}
+                    alsaRecorder = null
+                    Thread.sleep(1000)
+                }
+            }
+            if (!started) {
+                Log.e(TAG, "All ALSA attempts failed — giving up")
                 cleanup()
             }
 
