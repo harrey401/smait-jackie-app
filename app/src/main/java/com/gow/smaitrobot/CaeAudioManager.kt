@@ -39,8 +39,8 @@ class CaeAudioManager(private val context: Context) {
         private const val PCM_DEVICE = 0
         private const val PCM_CHANNELS = 8       // 8ch as reported by /proc/asound/card2/stream0
         private const val PCM_SAMPLE_RATE = 16000
-        private const val PCM_PERIOD_SIZE = 1024
-        private const val PCM_PERIOD_COUNT = 4
+        private const val PCM_PERIOD_SIZE = 1536
+        private const val PCM_PERIOD_COUNT = 8
         private const val PCM_FORMAT = 0         // PCM_FORMAT_S16_LE
 
         // WebSocket binary frame type bytes (must match Python server protocol.py)
@@ -280,6 +280,21 @@ class CaeAudioManager(private val context: Context) {
             // Force beam 0 on startup for continuous audio output.
             // Default -1 = "wait for wake word" which blocks onAudio callback (Pitfall 1).
             com.iflytek.iflyos.cae.CAE.CAESetRealBeam(0)
+
+            // Kill audioserver to release the ALSA device — it auto-restarts
+            // but by then we already hold the lock
+            try {
+                val process = Runtime.getRuntime().exec(arrayOf("su", "0", "sh", "-c",
+                    "for p in /proc/[0-9]*/cmdline; do " +
+                    "if tr '\\0' ' ' < \$p 2>/dev/null | grep -q audioserver; then " +
+                    "kill \$(echo \$p | grep -o '[0-9]*'); fi; done"
+                ))
+                process.waitFor()
+                Thread.sleep(500)
+                Log.i(TAG, "Killed audioserver to release ALSA device")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not kill audioserver: ${e.message}")
+            }
 
             // Auto-fix ALSA permissions (resets on reboot, no adb needed)
             try {
