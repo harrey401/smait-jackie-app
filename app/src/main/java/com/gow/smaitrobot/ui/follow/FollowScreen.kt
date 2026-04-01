@@ -79,6 +79,7 @@ fun FollowScreen(
     Column(modifier = Modifier.fillMaxSize()) {
 //        SubScreenTopBar(title = "Follow Mode", navController = navController)
         SubScreenTopBar(title = "Follow Mode", onBack = { navController.popBackStack() })
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -92,7 +93,7 @@ fun FollowScreen(
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isFollowing) MaterialTheme.colorScheme.primary
-                       else MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -128,7 +129,7 @@ fun FollowScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = if (isFollowing) Icons.Default.Stop
-                                     else Icons.Default.DirectionsWalk,
+                        else Icons.Default.DirectionsWalk,
                         contentDescription = if (isFollowing) "Stop" else "Start",
                         modifier = Modifier.size(48.dp),
                         tint = Color.White

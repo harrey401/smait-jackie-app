@@ -8,13 +8,14 @@ package com.gow.smaitrobot.follow
 class PidController(
     private val kp: Double,
     private val ki: Double,
-    private val kd: Double
+    private val kd: Double,
+    private val integralLimit: Double = 50.0   // ← new: clamp integral
 ) {
     private var integral: Double = 0.0
     private var prevError: Double = 0.0
 
     fun compute(error: Double, dt: Double): Double {
-        integral += error * dt
+        integral = (integral + error * dt).coerceIn(-integralLimit, integralLimit) // ← clamped
         val deriv = (error - prevError) / dt
         prevError = error
         return kp * error + ki * integral + kd * deriv
