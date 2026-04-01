@@ -50,9 +50,9 @@ import com.gow.smaitrobot.ui.conversation.SurveyBuilder
 import kotlinx.coroutines.delay
 import java.util.UUID
 
-private val DeepPurple = Color(0xFF1B0A6E)
+private val DeepPurple = Color(0xFF2E7D32)  // BABMDC green (was navy)
 private val Gold = Color(0xFFFFD700)
-private val LightPurple = Color(0xFF3D2B9E)
+private val LightPurple = Color(0xFF43A047) // lighter green accent
 private val SurfaceWhite = Color(0xFFFAFAFA)
 private val SubtleGray = Color(0xFF888888)
 

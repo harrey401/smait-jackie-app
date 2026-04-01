@@ -62,6 +62,36 @@
       "name": "EAG Laboratories",
       "logoAsset": "sponsor_eag.png",
       "tier": "sponsor"
+    },
+    {
+      "name": "Jabil",
+      "logoAsset": "sponsor_jabil.png",
+      "tier": "sponsor"
+    },
+    {
+      "name": "Airgas",
+      "logoAsset": "sponsor_airgas.png",
+      "tier": "sponsor"
+    },
+    {
+      "name": "Westpak",
+      "logoAsset": "sponsor_westpak.png",
+      "tier": "sponsor"
+    },
+    {
+      "name": "David Schnur Associates",
+      "logoAsset": "sponsor_dsa.png",
+      "tier": "sponsor"
+    },
+    {
+      "name": "APOMed Consultants",
+      "logoAsset": "sponsor_apomed.png",
+      "tier": "sponsor"
+    },
+    {
+      "name": "Master of Translational Medicine",
+      "logoAsset": "sponsor_mtm.png",
+      "tier": "sponsor"
     }
   ],
   "schedule": [
