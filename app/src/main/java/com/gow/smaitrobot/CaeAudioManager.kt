@@ -39,8 +39,8 @@ class CaeAudioManager(private val context: Context) {
         private const val PCM_DEVICE = 0
         private const val PCM_CHANNELS = 8       // 8ch as reported by /proc/asound/card2/stream0
         private const val PCM_SAMPLE_RATE = 16000
-        private const val PCM_PERIOD_SIZE = 1536
-        private const val PCM_PERIOD_COUNT = 8
+        private const val PCM_PERIOD_SIZE = 160
+        private const val PCM_PERIOD_COUNT = 4
         private const val PCM_FORMAT = 0         // PCM_FORMAT_S16_LE
 
         // WebSocket binary frame type bytes (must match Python server protocol.py)
