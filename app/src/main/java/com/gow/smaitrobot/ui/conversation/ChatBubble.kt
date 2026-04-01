@@ -48,12 +48,12 @@ fun ChatBubble(message: ChatMessage) {
     val isUser = message.isUser
     val arrangement = if (isUser) Arrangement.End else Arrangement.Start
     val bubbleColor = if (isUser) {
-        UserBlue.copy(alpha = 0.15f)
-    } else {
         BabmdcGreen
+    } else {
+        Color.White.copy(alpha = 0.85f)
     }
-    val textColor = if (isUser) Color(0xFF1A1A2E) else Color.White
-    val labelColor = if (isUser) UserBlue else Color.White.copy(alpha = 0.85f)
+    val textColor = if (isUser) Color.White else Color(0xFF1A1A2E)
+    val labelColor = if (isUser) Color.White.copy(alpha = 0.85f) else BabmdcDarkGreen
 
     val shape = if (isUser) {
         RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
