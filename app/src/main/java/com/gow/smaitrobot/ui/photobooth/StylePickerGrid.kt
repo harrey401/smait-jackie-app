@@ -108,15 +108,16 @@ fun StylePickerGrid(
                 textAlign = TextAlign.Center
             )
 
-            // 2-column grid of style cards
+            // 3-column grid — 6 styles fit in 2 rows with no scroll required,
+            // which avoids users thinking only the top row exists.
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(3),
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 12.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(STYLE_OPTIONS, key = { it.key }) { style ->
                     StyleCard(

@@ -85,6 +85,8 @@ val STYLE_OPTIONS = listOf(
  * [bitmapToJpeg] and [base64ToBitmap] are injectable for unit testing (avoids android.util.*
  * not available in JVM-only test environments). Defaults use Android's real implementations.
  */
+private const val PROCESSING_TIMEOUT_MS = 45_000L
+
 class PhotoBoothViewModel(
     private val wsRepo: WebSocketRepository,
     coroutineScope: CoroutineScope? = null,
@@ -118,6 +120,14 @@ class PhotoBoothViewModel(
 
     /** Countdown coroutine job — cancelled on retake. */
     private var countdownJob: Job? = null
+
+    /**
+     * Watchdog for server-side SD inference. Armed when entering Processing
+     * state, cancelled on any styled_result / photo_booth_error / retake.
+     * If it fires, transitions to Result with a null styled bitmap (error
+     * state) so the user isn't stuck on a spinner forever.
+     */
+    private var processingWatchdog: Job? = null
 
     init {
         // Collect server events to handle style_processing / styled_result / qr_code / error
@@ -198,16 +208,63 @@ class PhotoBoothViewModel(
      */
     fun sendHighResPhoto(bitmap: Bitmap, style: String) {
         rawBitmap = bitmap
-
-        // Step 1: Send style selection JSON
-        wsRepo.send("""{"type":"photo_booth_style","style":"$style"}""")
-
-        // Step 2: Compress to JPEG and build binary frame
         val jpegBytes = bitmapToJpeg(bitmap, 95)
+        sendJpegFrame(jpegBytes, style)
+    }
+
+    /**
+     * Fast path: send raw JPEG bytes directly without Bitmap decode/re-encode.
+     *
+     * Called when the Photo Booth reuses a frame from [VideoStreamManager]'s
+     * live capture. The raw JPEG is what the server already receives as a
+     * 0x02 video frame, so re-encoding it loses quality and wastes CPU.
+     *
+     * Also decodes the JPEG into [rawBitmap] so [ResultScreen] can still
+     * crossfade from the original capture into the styled result.
+     */
+    fun onPhotoJpegCaptured(jpegBytes: ByteArray) {
+        val current = _uiState.value
+        val selectedStyle = when (current) {
+            is PhotoBoothUiState.Processing -> current.styleName
+            is PhotoBoothUiState.Countdown -> current.selectedStyle
+            else -> return
+        }
+        rawBitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
+        _uiState.value = PhotoBoothUiState.Processing(selectedStyle)
+        sendJpegFrame(jpegBytes, selectedStyle)
+        armProcessingWatchdog()
+    }
+
+    /**
+     * Shared send path for both Bitmap and raw-JPEG capture flows.
+     * Emits the `photo_booth_style` JSON then the 0x08-prefixed binary frame.
+     */
+    private fun sendJpegFrame(jpegBytes: ByteArray, style: String) {
+        wsRepo.send("""{"type":"photo_booth_style","style":"$style"}""")
         val frame = ByteArray(1 + jpegBytes.size)
         frame[0] = 0x08
         System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
         wsRepo.send(frame)
+    }
+
+    /**
+     * Arms a watchdog that will fail the Processing state to a Result with
+     * null styledBitmap if the server does not return a styled_result in
+     * [PROCESSING_TIMEOUT_MS]. Prevents the user from being stuck on a
+     * spinner if the server crashes, OOMs, or the SD model hangs.
+     */
+    private fun armProcessingWatchdog() {
+        processingWatchdog?.cancel()
+        processingWatchdog = scope.launch {
+            delay(PROCESSING_TIMEOUT_MS)
+            if (_uiState.value is PhotoBoothUiState.Processing) {
+                _uiState.value = PhotoBoothUiState.Result(
+                    rawBitmap = rawBitmap,
+                    styledBitmap = null,
+                    downloadUrl = null
+                )
+            }
+        }
     }
 
     /**
@@ -234,6 +291,8 @@ class PhotoBoothViewModel(
      */
     fun onRetake() {
         countdownJob?.cancel()
+        processingWatchdog?.cancel()
+        rawBitmap = null
         _uiState.value = PhotoBoothUiState.StylePicker()
     }
 
@@ -247,6 +306,7 @@ class PhotoBoothViewModel(
             "styled_result" -> {
                 val current = _uiState.value
                 if (current is PhotoBoothUiState.Processing) {
+                    processingWatchdog?.cancel()
                     val b64 = extractJsonString(payload, "styled_b64")
                     val styledBitmap = if (b64 != null) base64ToBitmap(b64) else null
                     _uiState.value = PhotoBoothUiState.Result(
@@ -267,6 +327,7 @@ class PhotoBoothViewModel(
                 // Graceful degradation: show raw photo if style transfer failed
                 val current = _uiState.value
                 if (current is PhotoBoothUiState.Processing) {
+                    processingWatchdog?.cancel()
                     _uiState.value = PhotoBoothUiState.Result(
                         rawBitmap = rawBitmap,
                         styledBitmap = null,

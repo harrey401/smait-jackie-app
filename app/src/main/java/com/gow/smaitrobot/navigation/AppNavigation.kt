@@ -185,7 +185,11 @@ fun AppScaffold(
             EventInfoScreen(viewModel = eventInfoViewModel, navController = navController)
         }
         composable<Screen.PhotoBooth> {
-            PhotoBoothScreen(navController = navController, wsRepo = wsRepo)
+            PhotoBoothScreen(
+                navController = navController,
+                wsRepo = wsRepo,
+                videoStreamManager = videoStreamManager,
+            )
         }
         composable<Screen.Settings> {
             SettingsScreen(navController = navController)
