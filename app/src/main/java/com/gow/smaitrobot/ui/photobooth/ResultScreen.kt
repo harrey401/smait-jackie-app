@@ -98,8 +98,11 @@ fun ResultScreen(
     val styleOption = remember(state.styleKey) {
         STYLE_OPTIONS.firstOrNull { it.key == state.styleKey }
     }
-    val styleLabel = remember(styleOption) {
-        styleOption?.let { "Jackie × ${it.label}" } ?: "Jackie × Photo Booth"
+    val modeLabel = remember(state.mode) {
+        if (state.mode == MODE_SCENE) "Scene" else "Portrait"
+    }
+    val styleLabel = remember(styleOption, modeLabel) {
+        styleOption?.let { "${it.label} · $modeLabel" } ?: "Photo Booth · $modeLabel"
     }
     val theme = remember(state.styleKey) { styleThemeFor(state.styleKey) }
 
@@ -140,9 +143,9 @@ fun ResultScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "JACKIE",
+                        text = "JACKIE PHOTO BOOTH",
                         color = theme.accent,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 4.sp,
                     )

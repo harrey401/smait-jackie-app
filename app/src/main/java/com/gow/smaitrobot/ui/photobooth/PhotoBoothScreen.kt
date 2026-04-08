@@ -57,7 +57,9 @@ fun PhotoBoothScreen(
     when (val state = uiState) {
         is PhotoBoothUiState.StylePicker -> StylePickerGrid(
             selectedStyle = state.selectedStyle,
+            mode = state.mode,
             onStyleSelected = viewModel::onStyleSelected,
+            onModeSelected = viewModel::onModeSelected,
             onTakePhoto = viewModel::onTakePhoto,
             onBack = { navController.popBackStack() }
         )

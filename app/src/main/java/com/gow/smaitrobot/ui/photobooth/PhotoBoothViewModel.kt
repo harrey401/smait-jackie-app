@@ -26,14 +26,28 @@ import java.io.ByteArrayOutputStream
  */
 sealed class PhotoBoothUiState {
 
-    /** User is selecting a style. [selectedStyle] is null until the user taps a card. */
-    data class StylePicker(val selectedStyle: String? = null) : PhotoBoothUiState()
+    /**
+     * User is selecting a style. [selectedStyle] is null until the user taps a card.
+     * [mode] is "portrait" (face-centric PuLID restyling) or "scene" (whole-image
+     * img2img restyling). Defaults to portrait, switchable via the ModeTabs row.
+     */
+    data class StylePicker(
+        val selectedStyle: String? = null,
+        val mode: String = MODE_PORTRAIT,
+    ) : PhotoBoothUiState()
 
     /** 3-2-1 countdown in progress. [secondsLeft] decrements 3 -> 2 -> 1 each second. */
-    data class Countdown(val secondsLeft: Int, val selectedStyle: String) : PhotoBoothUiState()
+    data class Countdown(
+        val secondsLeft: Int,
+        val selectedStyle: String,
+        val mode: String = MODE_PORTRAIT,
+    ) : PhotoBoothUiState()
 
-    /** SD style transfer in progress. Spinner + style name shown. */
-    data class Processing(val styleName: String) : PhotoBoothUiState()
+    /** Server-side style transfer in progress. Spinner + style name shown. */
+    data class Processing(
+        val styleName: String,
+        val mode: String = MODE_PORTRAIT,
+    ) : PhotoBoothUiState()
 
     /**
      * Style result received. [rawBitmap] is the original capture.
@@ -41,14 +55,20 @@ sealed class PhotoBoothUiState {
      * [downloadUrl] arrives from server's qr_code message.
      * [styleKey] is the registry key the user picked (e.g. "cyberpunk") — lets the
      * ResultScreen pick a style-matched theme and confetti palette.
+     * [mode] is the mode the photo was captured in ("portrait" or "scene").
      */
     data class Result(
         val rawBitmap: Bitmap?,
         val styledBitmap: Bitmap?,
         val downloadUrl: String?,
-        val styleKey: String? = null
+        val styleKey: String? = null,
+        val mode: String = MODE_PORTRAIT,
     ) : PhotoBoothUiState()
 }
+
+/** Photo Booth modes. Keep in sync with server-side `MODE_PORTRAIT`/`MODE_SCENE`. */
+const val MODE_PORTRAIT = "portrait"
+const val MODE_SCENE = "scene"
 
 /**
  * Represents a single style option in the style picker grid.
@@ -157,6 +177,18 @@ class PhotoBoothViewModel(
     }
 
     /**
+     * User tapped the Portrait / Scene mode tab. Switches the StylePicker mode
+     * while keeping the currently-selected style (same 6 keys work in both modes).
+     * No-op if not in StylePicker state.
+     */
+    fun onModeSelected(mode: String) {
+        val current = _uiState.value
+        if (current is PhotoBoothUiState.StylePicker && current.mode != mode) {
+            _uiState.value = current.copy(mode = mode)
+        }
+    }
+
+    /**
      * User tapped the Take Photo button.
      * Launches the 3-2-1 countdown coroutine, then transitions to Processing.
      * Only valid when a style is selected in StylePicker state.
@@ -166,22 +198,25 @@ class PhotoBoothViewModel(
      */
     fun onTakePhoto() {
         val current = _uiState.value
-        val selectedStyle = when (current) {
-            is PhotoBoothUiState.StylePicker -> current.selectedStyle ?: return
+        val (selectedStyle, mode) = when (current) {
+            is PhotoBoothUiState.StylePicker -> {
+                val s = current.selectedStyle ?: return
+                s to current.mode
+            }
             else -> return
         }
 
         countdownJob?.cancel()
         countdownJob = scope.launch {
-            _uiState.value = PhotoBoothUiState.Countdown(3, selectedStyle)
+            _uiState.value = PhotoBoothUiState.Countdown(3, selectedStyle, mode)
             delay(1_000L)
-            _uiState.value = PhotoBoothUiState.Countdown(2, selectedStyle)
+            _uiState.value = PhotoBoothUiState.Countdown(2, selectedStyle, mode)
             delay(1_000L)
-            _uiState.value = PhotoBoothUiState.Countdown(1, selectedStyle)
+            _uiState.value = PhotoBoothUiState.Countdown(1, selectedStyle, mode)
             delay(1_000L)
             // PhotoBoothScreen detects Countdown(secondsLeft=0) and triggers Camera2 capture,
             // then calls onPhotoCaptured(bitmap). Transition to Processing here as a signal.
-            _uiState.value = PhotoBoothUiState.Processing(selectedStyle)
+            _uiState.value = PhotoBoothUiState.Processing(selectedStyle, mode)
         }
     }
 
@@ -193,13 +228,13 @@ class PhotoBoothViewModel(
      */
     fun onPhotoCaptured(bitmap: Bitmap) {
         val current = _uiState.value
-        val selectedStyle = when (current) {
-            is PhotoBoothUiState.Processing -> current.styleName
-            is PhotoBoothUiState.Countdown -> current.selectedStyle
+        val (selectedStyle, mode) = when (current) {
+            is PhotoBoothUiState.Processing -> current.styleName to current.mode
+            is PhotoBoothUiState.Countdown -> current.selectedStyle to current.mode
             else -> return
         }
-        _uiState.value = PhotoBoothUiState.Processing(selectedStyle)
-        sendHighResPhoto(bitmap, selectedStyle)
+        _uiState.value = PhotoBoothUiState.Processing(selectedStyle, mode)
+        sendHighResPhoto(bitmap, selectedStyle, mode)
     }
 
     /**
@@ -209,10 +244,10 @@ class PhotoBoothViewModel(
      * Frame format: `[0x08][JPEG bytes...]`
      * The 0x08 type byte distinguishes this from selfie frames (0x07).
      */
-    fun sendHighResPhoto(bitmap: Bitmap, style: String) {
+    fun sendHighResPhoto(bitmap: Bitmap, style: String, mode: String = MODE_PORTRAIT) {
         rawBitmap = bitmap
         val jpegBytes = bitmapToJpeg(bitmap, 95)
-        sendJpegFrame(jpegBytes, style)
+        sendJpegFrame(jpegBytes, style, mode)
     }
 
     /**
@@ -227,14 +262,14 @@ class PhotoBoothViewModel(
      */
     fun onPhotoJpegCaptured(jpegBytes: ByteArray) {
         val current = _uiState.value
-        val selectedStyle = when (current) {
-            is PhotoBoothUiState.Processing -> current.styleName
-            is PhotoBoothUiState.Countdown -> current.selectedStyle
+        val (selectedStyle, mode) = when (current) {
+            is PhotoBoothUiState.Processing -> current.styleName to current.mode
+            is PhotoBoothUiState.Countdown -> current.selectedStyle to current.mode
             else -> return
         }
         rawBitmap = BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
-        _uiState.value = PhotoBoothUiState.Processing(selectedStyle)
-        sendJpegFrame(jpegBytes, selectedStyle)
+        _uiState.value = PhotoBoothUiState.Processing(selectedStyle, mode)
+        sendJpegFrame(jpegBytes, selectedStyle, mode)
         armProcessingWatchdog()
     }
 
@@ -242,8 +277,8 @@ class PhotoBoothViewModel(
      * Shared send path for both Bitmap and raw-JPEG capture flows.
      * Emits the `photo_booth_style` JSON then the 0x08-prefixed binary frame.
      */
-    private fun sendJpegFrame(jpegBytes: ByteArray, style: String) {
-        wsRepo.send("""{"type":"photo_booth_style","style":"$style"}""")
+    private fun sendJpegFrame(jpegBytes: ByteArray, style: String, mode: String) {
+        wsRepo.send("""{"type":"photo_booth_style","style":"$style","mode":"$mode"}""")
         val frame = ByteArray(1 + jpegBytes.size)
         frame[0] = 0x08
         System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
@@ -266,7 +301,8 @@ class PhotoBoothViewModel(
                     rawBitmap = rawBitmap,
                     styledBitmap = null,
                     downloadUrl = null,
-                    styleKey = current.styleName
+                    styleKey = current.styleName,
+                    mode = current.mode,
                 )
             }
         }
@@ -318,7 +354,8 @@ class PhotoBoothViewModel(
                         rawBitmap = rawBitmap,
                         styledBitmap = styledBitmap,
                         downloadUrl = null,
-                        styleKey = current.styleName
+                        styleKey = current.styleName,
+                        mode = current.mode,
                     )
                 }
             }
@@ -338,7 +375,8 @@ class PhotoBoothViewModel(
                         rawBitmap = rawBitmap,
                         styledBitmap = null,
                         downloadUrl = null,
-                        styleKey = current.styleName
+                        styleKey = current.styleName,
+                        mode = current.mode,
                     )
                 }
             }
