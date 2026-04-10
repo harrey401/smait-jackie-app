@@ -1,0 +1,31 @@
+{
+  "tourName": "ENG192 Robotics Lab Tour",
+  "introduction": "Welcome to the ENG192 Robotics Lab! I'm Jackie, and I'll be your guide today. Let's explore what we do here. Follow me!",
+  "conclusion": "That concludes our lab tour! I hope you enjoyed learning about our robotics research. Feel free to ask me any questions — just head back to the home screen and tap Ask Jackie!",
+  "stops": [
+    {
+      "name": "Lab Entrance",
+      "poi": "lab_entrance",
+      "narration": "This is the BioRob Lab, part of SJSU's Mechanical Engineering department. We focus on robotics, human-robot interaction, and biomedical devices. The lab is led by Professor Kazerooni and supports both undergraduate and graduate research.",
+      "waitForTap": true
+    },
+    {
+      "name": "Robot Workstation",
+      "poi": "robot_workstation",
+      "narration": "Here's where we build and program our robots. You're looking at workstations equipped with ROS, sensor arrays, and embedded computing platforms. Students work on everything from navigation algorithms to computer vision.",
+      "waitForTap": true
+    },
+    {
+      "name": "3D Printing Area",
+      "poi": "3d_printing",
+      "narration": "Our 3D printing station handles rapid prototyping for robot parts, custom sensor mounts, and mechanical fixtures. We use both FDM and resin printers for different precision needs.",
+      "waitForTap": true
+    },
+    {
+      "name": "Testing Area",
+      "poi": "testing_area",
+      "narration": "This is our testing zone where we validate robot behaviors in controlled conditions before deploying them in real-world scenarios. We test navigation, object recognition, and human-robot interaction protocols here.",
+      "waitForTap": true
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Gear outline — represents robotics/engineering lab -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M54,30 L57,30 L58,34 L62,35 L65,32 L67,34 L64,38 L65,42 L69,43 L69,46 L65,47 L64,51 L67,54 L65,56 L62,53 L58,54 L57,58 L54,58 L53,54 L49,53 L46,56 L44,54 L47,51 L46,47 L42,46 L42,43 L46,42 L47,38 L44,34 L46,32 L49,35 L53,34 Z" />
+    <!-- Inner gear circle -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M55.5,40 A4.5,4.5 0 1,1 55.5,49 A4.5,4.5 0 1,1 55.5,40 Z" />
+    <!-- Robot head below gear -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M46,62 L63,62 L65,65 L65,76 L63,78 L46,78 L44,76 L44,65 Z" />
+    <!-- Robot eyes -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M49,67 A2,2 0 1,1 49,71 A2,2 0 1,1 49,67 Z" />
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M58,67 A2,2 0 1,1 58,71 A2,2 0 1,1 58,67 Z" />
+    <!-- Robot mouth -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M49,73 L60,73 L60,75 L49,75 Z" />
+    <!-- Antenna -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:strokeWidth="1.5"
+        android:strokeColor="#E3F2FD"
+        android:pathData="M54.5,58 L54.5,62" />
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M53,57 A2,2 0 1,1 56,57 A2,2 0 1,1 53,57 Z" />
+</vector>

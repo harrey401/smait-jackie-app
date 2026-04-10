@@ -1,0 +1,48 @@
+{
+  "eventName": "ENG192 Robotics Lab",
+  "tagline": "Meet Jackie — Your AI Lab Assistant",
+  "logoAsset": "sjsu_logo.png",
+  "colors": {
+    "primary": "#1A237E",
+    "secondary": "#42A5F5",
+    "tertiary": "#0D1642",
+    "background": "#F0F4FA",
+    "onPrimary": "#FFFFFF",
+    "onBackground": "#1A1F3A",
+    "surface": "#FFFFFF",
+    "onSurface": "#1A1F3A"
+  },
+  "fonts": {
+    "bodyFont": "Roboto",
+    "headingFont": "Roboto"
+  },
+  "cards": [
+    {
+      "label": "Ask Jackie",
+      "action": "navigate:chat",
+      "icon": "chat",
+      "description": "Ask about the lab, robotics, research, or anything!"
+    },
+    {
+      "label": "Lab Tour",
+      "action": "navigate:labtour",
+      "icon": "tour",
+      "description": "Jackie gives you a guided tour of the lab"
+    },
+    {
+      "label": "Photo Booth",
+      "action": "navigate:photobooth",
+      "icon": "camera",
+      "description": "Take a stylized photo with Jackie!"
+    },
+    {
+      "label": "Follow Me",
+      "action": "navigate:follow",
+      "icon": "follow",
+      "description": "Jackie follows you around the lab"
+    }
+  ],
+  "sponsors": [],
+  "schedule": [],
+  "speakers": []
+}

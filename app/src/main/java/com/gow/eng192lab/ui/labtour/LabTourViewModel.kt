@@ -1,0 +1,136 @@
+package com.gow.eng192lab.ui.labtour
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import com.gow.eng192lab.TtsAudioPlayer
+import com.gow.eng192lab.data.websocket.WebSocketRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONObject
+
+private const val TAG = "LabTour"
+
+data class TourStop(
+    val name: String,
+    val poi: String,
+    val narration: String,
+    val waitForTap: Boolean
+)
+
+data class TourData(
+    val tourName: String,
+    val introduction: String,
+    val conclusion: String,
+    val stops: List<TourStop>
+)
+
+sealed class TourState {
+    object NotStarted : TourState()
+    object Introduction : TourState()
+    data class Navigating(val stopIndex: Int, val stopName: String) : TourState()
+    data class Narrating(val stopIndex: Int, val stopName: String, val narration: String) : TourState()
+    data class WaitingForNext(val stopIndex: Int, val stopName: String) : TourState()
+    object Conclusion : TourState()
+    object Finished : TourState()
+}
+
+class LabTourViewModel(
+    private val wsRepo: WebSocketRepository,
+    private val ttsPlayer: TtsAudioPlayer
+) : ViewModel() {
+
+    private val _tourState = MutableStateFlow<TourState>(TourState.NotStarted)
+    val tourState: StateFlow<TourState> = _tourState.asStateFlow()
+
+    private val _tourData = MutableStateFlow<TourData?>(null)
+    val tourData: StateFlow<TourData?> = _tourData.asStateFlow()
+
+    private val _currentStopIndex = MutableStateFlow(0)
+    val currentStopIndex: StateFlow<Int> = _currentStopIndex.asStateFlow()
+
+    fun loadTour(tourData: TourData) {
+        _tourData.value = tourData
+        _tourState.value = TourState.NotStarted
+        _currentStopIndex.value = 0
+    }
+
+    fun startTour() {
+        val data = _tourData.value ?: return
+        _tourState.value = TourState.Introduction
+        // Send introduction as TTS via server
+        sendTtsRequest(data.introduction)
+        Log.i(TAG, "Tour started: ${data.tourName}")
+    }
+
+    fun proceedFromIntro() {
+        navigateToStop(0)
+    }
+
+    fun nextStop() {
+        val data = _tourData.value ?: return
+        val nextIndex = _currentStopIndex.value + 1
+        if (nextIndex < data.stops.size) {
+            navigateToStop(nextIndex)
+        } else {
+            _tourState.value = TourState.Conclusion
+            sendTtsRequest(data.conclusion)
+        }
+    }
+
+    fun finishTour() {
+        _tourState.value = TourState.Finished
+        _currentStopIndex.value = 0
+    }
+
+    fun resetTour() {
+        _tourState.value = TourState.NotStarted
+        _currentStopIndex.value = 0
+    }
+
+    private fun navigateToStop(index: Int) {
+        val data = _tourData.value ?: return
+        val stop = data.stops[index]
+        _currentStopIndex.value = index
+        _tourState.value = TourState.Navigating(index, stop.name)
+
+        // Send navigation command to server
+        val navCmd = JSONObject().apply {
+            put("type", "lab_tour_navigate")
+            put("poi", stop.poi)
+            put("stop_index", index)
+        }
+        wsRepo.send(navCmd.toString())
+        Log.i(TAG, "Navigating to stop $index: ${stop.name} (POI: ${stop.poi})")
+
+        // For now, immediately transition to narrating
+        // In production, wait for nav_status "arrived" from server
+        arriveAtStop(index)
+    }
+
+    fun arriveAtStop(index: Int) {
+        val data = _tourData.value ?: return
+        val stop = data.stops[index]
+        _tourState.value = TourState.Narrating(index, stop.name, stop.narration)
+        sendTtsRequest(stop.narration)
+    }
+
+    fun narrationComplete() {
+        val data = _tourData.value ?: return
+        val index = _currentStopIndex.value
+        val stop = data.stops[index]
+        if (stop.waitForTap) {
+            _tourState.value = TourState.WaitingForNext(index, stop.name)
+        } else {
+            nextStop()
+        }
+    }
+
+    private fun sendTtsRequest(text: String) {
+        val msg = JSONObject().apply {
+            put("type", "lab_tour_tts")
+            put("text", text)
+        }
+        wsRepo.send(msg.toString())
+    }
+}

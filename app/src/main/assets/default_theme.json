@@ -1,0 +1,89 @@
+{
+  "eventName": "Women in Engineering 2026",
+  "tagline": "Engineering Beyond Imagination",
+  "logoAsset": "smait_logo.png",
+  "colors": {
+    "primary": "#0956A4",
+    "secondary": "#E8A317",
+    "tertiary": "#1A3D6D",
+    "background": "#F8F9FA",
+    "onPrimary": "#FFFFFF",
+    "onBackground": "#1A1A2E",
+    "surface": "#FFFFFF",
+    "onSurface": "#1A1A2E"
+  },
+  "fonts": {
+    "bodyFont": "Roboto",
+    "headingFont": "Roboto"
+  },
+  "cards": [
+    {
+      "label": "Ask Me Anything",
+      "action": "navigate:chat",
+      "icon": "chat",
+      "description": "Chat with your AI campus guide"
+    },
+    {
+      "label": "Guided Tour",
+      "action": "navigate:map",
+      "icon": "map",
+      "description": "Get guided to any location on campus"
+    },
+    {
+      "label": "Facilities",
+      "action": "navigate:facilities",
+      "icon": "location",
+      "description": "Find rooms, restrooms, and amenities"
+    },
+    {
+      "label": "Event Info",
+      "action": "navigate:eventinfo",
+      "icon": "info",
+      "description": "Schedule, speakers, and venue info"
+    },
+    {
+      "label": "Follow Me",
+      "action": "navigate:follow",
+      "icon": "follow",
+      "description": "Robot follows you around"
+    },
+    {
+      "label": "Settings",
+      "action": "navigate:settings",
+      "icon": "settings",
+      "description": "Volume control and system settings"
+    }
+  ],
+  "sponsors": [
+    {
+      "name": "Dexcom",
+      "logoAsset": "sponsor_dexcom.png"
+    },
+    {
+      "name": "Google",
+      "logoAsset": "sponsor_google.png"
+    },
+    {
+      "name": "Adobe",
+      "logoAsset": "sponsor_adobe.png"
+    },
+    {
+      "name": "IBM",
+      "logoAsset": "sponsor_ibm.png"
+    },
+    {
+      "name": "KLA",
+      "logoAsset": "sponsor_kla.png"
+    },
+    {
+      "name": "Marvell",
+      "logoAsset": "sponsor_marvell.png"
+    },
+    {
+      "name": "Synopsys",
+      "logoAsset": "sponsor_synopsys.png"
+    }
+  ],
+  "schedule": [],
+  "speakers": []
+}

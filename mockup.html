@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #111; display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 20px; }
+h2 { color: #fff; margin-top: 20px; }
+.screen { width: 960px; height: 540px; border-radius: 12px; overflow: hidden; position: relative; border: 2px solid #333; }
+
+/* IDLE SCREEN */
+.idle { background: #1a1a2e; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+.idle .logo-sjsu { position: absolute; top: 24px; left: 24px; height: 60px; }
+.idle .logo-biorob { position: absolute; top: 24px; right: 24px; height: 60px; }
+.idle .title { font-size: 96px; color: #fff; font-weight: 200; letter-spacing: 8px; }
+.idle .subtitle { font-size: 28px; color: #8888aa; margin-top: 16px; font-weight: 300; }
+.idle .pulse { position: absolute; width: 280px; height: 280px; border-radius: 50%; border: 2px solid rgba(100,140,255,0.2); animation: pulse 3s infinite; }
+@keyframes pulse { 0% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.1; } 100% { transform: scale(0.8); opacity: 0.5; } }
+.idle .dot { position: absolute; bottom: 20px; right: 20px; width: 14px; height: 14px; border-radius: 50%; background: #44ff44; }
+
+/* ACTIVE SCREEN */
+.active { background: #1a1a2e; display: flex; }
+.chat-side { flex: 1; padding: 16px; display: flex; flex-direction: column; }
+.camera-side { flex: 1; padding: 16px; }
+.camera-side .cam { width: 100%; height: 100%; background: #2a2a3e; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #555; font-size: 24px; }
+.status-bar { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.status-dot { width: 12px; height: 12px; border-radius: 50%; background: #44ff44; }
+.status-text { color: #8888aa; font-size: 14px; }
+.chat-area { flex: 1; overflow-y: auto; padding: 12px 0; display: flex; flex-direction: column; gap: 12px; }
+.bubble { max-width: 80%; padding: 12px 16px; border-radius: 16px; font-size: 16px; line-height: 1.4; }
+.bubble.user { background: #1e3a5f; color: #ddd; align-self: flex-start; border-bottom-left-radius: 4px; }
+.bubble.robot { background: #1e4a3a; color: #ddd; align-self: flex-end; border-bottom-right-radius: 4px; }
+.selfie-btn { align-self: center; background: #3a3a5e; color: #aab; border: none; padding: 10px 24px; border-radius: 24px; font-size: 15px; margin-top: 8px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<h2>IDLE STATE — Waiting for visitors</h2>
+<div class="screen idle">
+  <img class="logo-biorob" src="file:///home/gow/.openclaw/media/inbound/file_0---5d0a2a99-4240-463d-b41b-3644fb5f260c.jpg" onerror="this.style.background='#334';this.style.width='120px';">
+  <img class="logo-sjsu" src="file:///home/gow/.openclaw/media/inbound/file_1---8166625b-1e53-4235-b179-392e6ef70eb0.jpg" onerror="this.style.background='#334';this.style.width='120px';">
+  <div class="pulse"></div>
+  <div class="title">Jackie</div>
+  <div class="subtitle">Approach me to chat!</div>
+  <div class="dot"></div>
+</div>
+
+<h2>ACTIVE STATE — In conversation</h2>
+<div class="screen active">
+  <div class="chat-side">
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span class="status-text">Listening...</span>
+    </div>
+    <div class="chat-area">
+      <div class="bubble robot">Hi there! Welcome to SJSU. How can I help you today?</div>
+      <div class="bubble user">Where is the engineering building?</div>
+      <div class="bubble robot">The Engineering building is right across the courtyard, just head east from here. You can't miss it!</div>
+      <div class="bubble user">Can we take a selfie?</div>
+      <div class="bubble robot">Of course! Hit the selfie button and let's do it!</div>
+    </div>
+    <button class="selfie-btn">📸 Take a Selfie</button>
+  </div>
+  <div class="camera-side">
+    <div class="cam">📷 Camera Feed</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Jackie Lab</string>
+    <string name="jackie_title">Jackie</string>
+    <string name="approach_message">Welcome to the ENG192 Robotics Lab!</string>
+    <string name="powered_by">BioRob Lab  ·  SJSU ME</string>
+    <string name="settings_title">Connection Settings</string>
+    <string name="server_ip">Server IP</string>
+    <string name="server_port">Port</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="save">Save &amp; Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="status_idle">Idle</string>
+    <string name="status_listening">Listening…</string>
+    <string name="status_thinking">Thinking…</string>
+    <string name="status_speaking">Speaking…</string>
+    <string name="status_connected">Connected</string>
+    <string name="selfie_button">Take a Selfie</string>
+    <string name="selfie_retake">Retake</string>
+    <string name="selfie_save">Save</string>
+    <string name="live_indicator">LIVE</string>
+    <string name="label_you">You</string>
+    <string name="label_jackie">Jackie</string>
+    <string name="prefs_name">eng192lab_prefs</string>
+    <string name="pref_ip">server_ip</string>
+    <string name="pref_port">server_port</string>
+</resources>
