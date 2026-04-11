@@ -163,7 +163,7 @@ fun AppScaffold(
             SettingsScreen(navController = navController)
         }
         composable<Screen.Follow> {
-            FollowScreen(followController = followController, navController = navController)
+            FollowScreen(wsRepo = wsRepo, navController = navController)
         }
         composable<Screen.LabTour> {
             LabTourScreen(viewModel = labTourViewModel, navController = navController)

@@ -1,6 +1,7 @@
 package com.gow.eng192lab.ui.labtour
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

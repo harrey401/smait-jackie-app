@@ -36,10 +36,10 @@
       "description": "Take a stylized photo with Jackie!"
     },
     {
-      "label": "Follow Me",
+      "label": "Tracking Tests",
       "action": "navigate:follow",
       "icon": "follow",
-      "description": "Jackie follows you around the lab"
+      "description": "Test face-the-user and follow-me skills"
     }
   ],
   "sponsors": [],
