@@ -188,7 +188,6 @@ fun AppScaffold(
             PhotoBoothScreen(
                 navController = navController,
                 wsRepo = wsRepo,
-                videoStreamManager = videoStreamManager,
             )
         }
         composable<Screen.Settings> {
