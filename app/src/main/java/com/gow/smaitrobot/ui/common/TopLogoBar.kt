@@ -12,7 +12,7 @@ import androidx.compose.ui.res.painterResource
 import com.gow.smaitrobot.R
 
 /**
- * Top banner bar — BABMDC conference banner centered at ~2/3 screen width.
+ * Top banner bar — event banner centered at ~2/3 screen width.
  */
 @Composable
 fun TopLogoBar(
@@ -23,8 +23,8 @@ fun TopLogoBar(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.babmdc_logo),
-            contentDescription = "BABMDC 2026 Banner",
+            painter = painterResource(id = R.drawable.hfes_banner),
+            contentDescription = "HFES Western Regional Meeting",
             modifier = Modifier
                 .fillMaxWidth(0.65f)
                 .wrapContentHeight(),

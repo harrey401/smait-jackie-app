@@ -63,17 +63,17 @@ import com.gow.smaitrobot.ui.common.SponsorBar
 import com.gow.smaitrobot.ui.common.TopLogoBar
 import com.gow.smaitrobot.ui.common.WieBackground
 
-// BABMDC event colors (biomedical green palette)
-private val EventDark = Color(0xFF1A3D1A)
-private val EventAccent = Color(0xFF6EC26E)
-private val CardPrimary = Color(0xFF2D5A2D)
-private val CardSecondary = Color(0xFF376137)
+// HFES event colors (navy + purple palette)
+private val EventDark = Color(0xFF1B2838)
+private val EventAccent = Color(0xFF8BC53F)
+private val CardPrimary = Color(0xFF2D1B69)
+private val CardSecondary = Color(0xFF4A3278)
 
 /**
  * Home screen — the primary landing screen on Jackie's kiosk display.
  *
  * Layout:
- * 1. Top: Logo bar (SJSU | Event | BioRob) — long press opens hidden Settings
+ * 1. Top: Logo bar (HFES | Banner | SJSU) — long press opens hidden Settings
  * 2. Middle: Event conference graphic (left) + 4 cards in 2x2 grid (right)
  * 3. Bottom: Sponsor bar
  */
@@ -96,7 +96,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // 1. Top row: BioRob (left) | Banner (center) | SJSU ME (right)
+            // 1. Top row: HFES (left) | Banner (center) | SJSU (right)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -121,7 +121,7 @@ fun HomeScreen(
                     contentScale = ContentScale.Fit
                 )
 
-                // BABMDC banner (center, nudged left to visually center)
+                // HFES banner (center)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -129,14 +129,14 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.babmdc_logo),
-                        contentDescription = "BABMDC 2026 Banner",
+                        painter = painterResource(id = R.drawable.hfes_banner),
+                        contentDescription = "HFES Western Regional Meeting",
                         modifier = Modifier.fillMaxWidth(),
                         contentScale = ContentScale.Fit
                     )
                 }
 
-                // SJSU ME logo (right, 2x bigger, inset from edge)
+                // SJSU ME logo (right, inset from edge)
                 Image(
                     painter = painterResource(id = R.drawable.sjsu_logo),
                     contentDescription = "SJSU Mechanical Engineering",

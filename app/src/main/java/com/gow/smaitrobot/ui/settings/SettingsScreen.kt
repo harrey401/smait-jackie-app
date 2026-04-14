@@ -51,8 +51,8 @@ private const val KEY_VOLUME = "tts_volume"
 private const val KEY_SERVER_IP = "server_ip"
 private const val KEY_SERVER_PORT = "server_port"
 
-private val WieNavy = Color(0xFF1B0A6E)
-private val WieTeal = Color(0xFF00A99D)
+private val WieNavy = Color(0xFF1B2838)
+private val WieTeal = Color(0xFF8BC53F)
 
 /**
  * Settings screen with server connection and TTS volume control.

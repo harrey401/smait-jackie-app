@@ -37,7 +37,10 @@ data class ThemeConfig(
     val schedule: List<ScheduleItem> = emptyList(),
 
     @SerializedName("speakers")
-    val speakers: List<SpeakerInfo> = emptyList()
+    val speakers: List<SpeakerInfo> = emptyList(),
+
+    @SerializedName("appMode")
+    val appMode: String = ""
 ) {
     companion object {
         /**

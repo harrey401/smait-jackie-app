@@ -129,6 +129,16 @@ fun AppScaffold(
     val isConnected by wsRepo.isConnected.collectAsStateWithLifecycle()
     LaunchedEffect(isConnected) {
         if (isConnected) {
+            // Tell server which event app is connected — server injects event context into LLM
+            val appMode = context.jackieApp.themeRepository.config.value.appMode
+            if (appMode.isNotEmpty()) {
+                wsRepo.send(org.json.JSONObject().apply {
+                    put("type", "app_mode")
+                    put("mode", appMode)
+                }.toString())
+                Log.i(TAG, "Sent app_mode: $appMode")
+            }
+
             // Jackie: copy CAE assets and start beamformed audio
             caeAudioManager.copyAssetsIfNeeded()
             val ws = wsRepo.currentWebSocket

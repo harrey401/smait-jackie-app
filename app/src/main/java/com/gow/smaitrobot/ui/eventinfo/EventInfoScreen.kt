@@ -43,9 +43,9 @@ import com.gow.smaitrobot.ui.common.SponsorBar
 import com.gow.smaitrobot.ui.common.SubScreenTopBar
 import com.gow.smaitrobot.ui.common.WieBackground
 
-private val ThemeDark = Color(0xFF1A3D1A)
-private val ThemeAccent = Color(0xFF6EC26E)
-private val ThemePrimary = Color(0xFF376137)
+private val ThemeDark = Color(0xFF1B2838)
+private val ThemeAccent = Color(0xFF8BC53F)
+private val ThemePrimary = Color(0xFF7B52A8)
 
 /**
  * Event Info screen — schedule, speakers, and venue info.
@@ -86,7 +86,7 @@ fun EventInfoScreen(
                     ) {
                         Text(
                             text = eventName,
-                            color = ThemeDark,
+                            color = Color.White,
                             fontSize = 52.sp,
                             fontWeight = FontWeight.ExtraBold,
                             textAlign = TextAlign.Center
@@ -184,7 +184,7 @@ private fun SectionHeading(
     Text(
         text = text,
         modifier = modifier,
-        color = ThemeDark,
+        color = Color.White.copy(alpha = 0.9f),
         fontSize = 48.sp,
         fontWeight = FontWeight.ExtraBold
     )
@@ -198,7 +198,7 @@ private fun EmptyState(
     Text(
         text = message,
         modifier = modifier,
-        color = ThemeDark.copy(alpha = 0.5f),
+        color = Color.White.copy(alpha = 0.5f),
         fontSize = 36.sp,
         fontWeight = FontWeight.Normal
     )

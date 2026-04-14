@@ -164,7 +164,7 @@ fun PhotoBoothScreen(navController: NavHostController, wsRepo: WebSocketReposito
     LaunchedEffect(Unit) {
         wsRepo.events.filterIsInstance<WebSocketEvent.JsonMessage>().collect { event ->
             try {
-                val json = JSONObject(event.text)
+                val json = JSONObject(event.payload)
                 when (json.optString("type")) {
                     "styled_result" -> {
                         val b64 = json.getString("styled_b64")
