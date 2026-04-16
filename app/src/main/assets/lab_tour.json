@@ -6,7 +6,7 @@
     {
       "name": "Lab Entrance",
       "poi": "lab_entrance",
-      "narration": "This is the BioRob Lab, part of SJSU's Mechanical Engineering department. We focus on robotics, human-robot interaction, and biomedical devices. The lab is led by Professor Kazerooni and supports both undergraduate and graduate research.",
+      "narration": "This is the BioRob Lab, part of SJSU's Mechanical Engineering department. We focus on robotics, human-robot interaction, and biomedical devices. The lab is led by Dr. Lin Jiang and supports both undergraduate and graduate research.",
       "waitForTap": true
     },
     {
