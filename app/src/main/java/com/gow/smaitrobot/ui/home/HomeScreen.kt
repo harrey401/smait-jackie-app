@@ -96,7 +96,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // 1. Top row: HFES (left) | Banner (center) | SJSU (right)
+            // 1. Top row: BioRob (left) | HFES banner (center, flush top) | SJSU (right)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -108,25 +108,24 @@ fun HomeScreen(
                             }
                         }
                     )
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                // BioRob Lab logo (left, inset from edge)
+                // BioRob Lab logo (left) — same height as SJSU, top-aligned with banner
                 Image(
                     painter = painterResource(id = R.drawable.biorob_logo),
                     contentDescription = "BioRob Lab",
                     modifier = Modifier
-                        .height(200.dp)
-                        .padding(start = 24.dp),
+                        .height(220.dp)
+                        .padding(start = 24.dp, top = 24.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                // HFES banner (center)
+                // HFES banner (center) — flush to the very top
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 40.dp),
-                    contentAlignment = Alignment.Center
+                        .weight(1f),
+                    contentAlignment = Alignment.TopCenter
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.hfes_banner),
@@ -136,13 +135,13 @@ fun HomeScreen(
                     )
                 }
 
-                // SJSU ME logo (right, inset from edge)
+                // SJSU ME logo (right) — same height as BioRob
                 Image(
                     painter = painterResource(id = R.drawable.sjsu_logo),
                     contentDescription = "SJSU Mechanical Engineering",
                     modifier = Modifier
-                        .height(400.dp)
-                        .padding(end = 40.dp),
+                        .height(220.dp)
+                        .padding(end = 24.dp, top = 24.dp),
                     contentScale = ContentScale.Fit
                 )
             }

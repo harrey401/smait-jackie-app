@@ -108,16 +108,12 @@ private val STYLES = listOf(
         Color(0xFF4ADE80), Color(0xFF059669)),         // green meadow
     StyleOption("cyberpunk", "Cyberpunk",
         Color(0xFFE879F9), Color(0xFF6D28D9)),         // neon magenta-purple
-    StyleOption("gta", "GTA",
-        Color(0xFFFB923C), Color(0xFFDC2626)),         // orange-red sunset
     StyleOption("pop_art", "Pop Art",
         Color(0xFFFACC15), Color(0xFFEF4444)),         // yellow-red bold
     StyleOption("oil_painting", "Oil Painting",
         Color(0xFFD4A574), Color(0xFF78350F)),         // warm umber
     StyleOption("pixel_art", "Pixel Art",
         Color(0xFF60A5FA), Color(0xFF1D4ED8)),         // retro blue
-    StyleOption("comic_hero", "Comic Hero",
-        Color(0xFFF87171), Color(0xFF1E40AF)),         // red-blue hero
     StyleOption("claymation", "Claymation",
         Color(0xFFFDA4AF), Color(0xFFF59E0B)),         // clay pink-amber
     StyleOption("pixar", "Pixar 3D",
@@ -409,7 +405,7 @@ private fun ThemesGrid(
     onStyleSelect: (String) -> Unit
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(5),
+        columns = GridCells.Fixed(4),
         contentPadding = PaddingValues(4.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -438,7 +434,7 @@ private fun StyleCard(
     Card(
         onClick = onClick,
         modifier = Modifier
-            .aspectRatio(0.85f)
+            .aspectRatio(1.6f)
             .then(
                 if (selected) Modifier.border(borderWidth, SelectedBorder, RoundedCornerShape(16.dp))
                 else Modifier

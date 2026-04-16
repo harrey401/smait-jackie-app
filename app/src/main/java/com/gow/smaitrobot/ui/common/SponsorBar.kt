@@ -8,7 +8,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -47,35 +47,8 @@ fun SponsorBar(
     modifier: Modifier = Modifier
 ) {
     if (sponsors.isEmpty()) return
-
-    if (sponsors.size <= 3) {
-        StaticRow(sponsors = sponsors, modifier = modifier)
-    } else {
-        MarqueeRow(sponsors = sponsors, modifier = modifier)
-    }
-}
-
-@Composable
-private fun StaticRow(
-    sponsors: List<SponsorConfig>,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        sponsors.forEach { sponsor ->
-            SponsorLogo(
-                sponsor = sponsor,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-    }
+    // Always marquee — even a short sponsor list should roll.
+    MarqueeRow(sponsors = sponsors, modifier = modifier)
 }
 
 @Composable
@@ -84,9 +57,13 @@ private fun MarqueeRow(
     modifier: Modifier = Modifier
 ) {
     // Repeat the list so one strip is always wider than the viewport.
-    // With 4 sponsors and generous padding, 2x may barely fit — 3x guarantees overlap.
+    // With 3 generously-spaced sponsors, 4x guarantees overlap on wide tablets.
     val repeatedSponsors = remember(sponsors) {
-        val reps = if (sponsors.size < 6) 3 else 2
+        val reps = when {
+            sponsors.size <= 3 -> 4
+            sponsors.size < 6 -> 3
+            else -> 2
+        }
         (1..reps).flatMap { sponsors }
     }
 
@@ -109,8 +86,8 @@ private fun MarqueeRow(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .height(180.dp)
+            .background(Color.Transparent)
             .clipToBounds()
     ) {
         // Strip 1 — also used to measure the exact width of one set
@@ -153,7 +130,7 @@ private fun LogoStrip(
         sponsors.forEach { sponsor ->
             SponsorLogo(
                 sponsor = sponsor,
-                modifier = Modifier.padding(horizontal = 56.dp)
+                modifier = Modifier.padding(horizontal = 72.dp)
             )
         }
     }
@@ -175,15 +152,15 @@ private fun SponsorLogo(
             painter = painterResource(id = resId),
             contentDescription = "${sponsor.name} logo",
             modifier = modifier
-                .height(72.dp)
-                .widthIn(max = 240.dp),
+                .height(140.dp)
+                .widthIn(max = 400.dp),
             contentScale = ContentScale.Fit
         )
     } else if (sponsor.name.isNotEmpty()) {
         androidx.compose.material3.Text(
             text = sponsor.name,
             modifier = modifier.padding(horizontal = 12.dp),
-            fontSize = 48.sp,
+            fontSize = 64.sp,
             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
