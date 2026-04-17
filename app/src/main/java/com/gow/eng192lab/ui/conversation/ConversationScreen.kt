@@ -154,7 +154,7 @@ fun ConversationScreen(
                                         Text(
                                             "Say something to start the conversation",
                                             fontSize = 32.sp,
-                                            color = Color(0xFF1B0A6E).copy(alpha = 0.5f)
+                                            color = Color.White.copy(alpha = 0.6f)
                                         )
                                     }
                                 }
