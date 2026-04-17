@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -114,97 +115,113 @@ fun SurveyScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 48.dp, vertical = 32.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 48.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "How was it?",
-                fontSize = 96.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = DeepPurple,
-                textAlign = TextAlign.Center,
-                lineHeight = 100.sp
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            BigRatingQuestion(
-                question = "Overall experience with Jackie",
-                selected = starRating,
-                onSelect = { starRating = it }
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            BigRatingQuestion(
-                question = "Did Jackie understand you?",
-                selected = understood,
-                onSelect = { understood = it }
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            BigRatingQuestion(
-                question = "Did the conversation feel natural?",
-                selected = natural,
-                onSelect = { natural = it }
-            )
-
-            Spacer(modifier = Modifier.height(56.dp))
-
-            Button(
-                onClick = {
-                    onSubmit(
-                        SurveyBuilder.buildCompleted(
-                            starRating = starRating,
-                            understood = understood,
-                            helpful = 0,
-                            natural = natural,
-                            attentive = 0,
-                            comment = "",
-                            startTimeMs = surveyStartTime,
-                            sessionId = sessionId
-                        )
-                    )
-                },
+            // Scrollable questions area — takes remaining space, pushing
+            // Submit/Skip to stay pinned at the bottom always.
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 600.dp)
-                    .height(96.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = DeepPurple,
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(20.dp)
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Submit", fontSize = 44.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "How was it?",
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = DeepPurple,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 76.sp
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                BigRatingQuestion(
+                    question = "Overall experience with Jackie",
+                    selected = starRating,
+                    onSelect = { starRating = it }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                BigRatingQuestion(
+                    question = "Did Jackie understand you?",
+                    selected = understood,
+                    onSelect = { understood = it }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                BigRatingQuestion(
+                    question = "Did the conversation feel natural?",
+                    selected = natural,
+                    onSelect = { natural = it }
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            androidx.compose.material3.TextButton(
-                onClick = {
-                    onDismiss(
-                        SurveyBuilder.buildDismissed(
-                            starRating = starRating,
-                            understood = understood,
-                            helpful = 0,
-                            natural = natural,
-                            attentive = 0,
-                            comment = "",
-                            startTimeMs = surveyStartTime,
-                            sessionId = sessionId
+            // Pinned action bar — always visible.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(top = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Button(
+                    onClick = {
+                        onSubmit(
+                            SurveyBuilder.buildCompleted(
+                                starRating = starRating,
+                                understood = understood,
+                                helpful = 0,
+                                natural = natural,
+                                attentive = 0,
+                                comment = "",
+                                startTimeMs = surveyStartTime,
+                                sessionId = sessionId
+                            )
                         )
-                    )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 600.dp)
+                        .height(88.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DeepPurple,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text("Submit", fontSize = 40.sp, fontWeight = FontWeight.Bold)
                 }
-            ) {
-                Text("Skip", fontSize = 28.sp, color = DeepPurple, fontWeight = FontWeight.SemiBold)
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        onDismiss(
+                            SurveyBuilder.buildDismissed(
+                                starRating = starRating,
+                                understood = understood,
+                                helpful = 0,
+                                natural = natural,
+                                attentive = 0,
+                                comment = "",
+                                startTimeMs = surveyStartTime,
+                                sessionId = sessionId
+                            )
+                        )
+                    }
+                ) {
+                    Text("Skip", fontSize = 26.sp, color = DeepPurple, fontWeight = FontWeight.SemiBold)
+                }
+            }
         }
     }
 }
