@@ -2,6 +2,7 @@ package com.gow.smaitrobot.navigation
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +39,8 @@ import com.gow.smaitrobot.ui.photobooth.PhotoBoothScreen
 import com.gow.smaitrobot.ui.web.WebViewScreen
 import com.gow.smaitrobot.follow.FollowController
 import com.gow.smaitrobot.ui.follow.FollowScreen
+import com.gow.smaitrobot.ui.follow.FollowStopPill
+import androidx.compose.ui.Alignment
 
 private const val TAG = "AppNavigation"
 
@@ -172,52 +175,61 @@ fun AppScaffold(
         }
     }
 
-    // No Scaffold/bottom bar — just NavHost filling the screen.
-    // Sub-screens use their own top bar with a back/home button.
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Home,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        composable<Screen.Home> {
-            HomeScreen(viewModel = homeViewModel, navController = navController)
-        }
-        composable<Screen.Chat> {
-            ConversationScreen(viewModel = conversationViewModel, navController = navController)
-        }
-        composable<Screen.Map> {
-            NavigationMapScreen(viewModel = navMapViewModel, navController = navController)
-        }
-        composable<Screen.Facilities> {
-            FacilitiesScreen(viewModel = facilitiesViewModel, navController = navController)
-        }
-        composable<Screen.EventInfo> {
-            EventInfoScreen(viewModel = eventInfoViewModel, navController = navController)
-        }
-        composable<Screen.PhotoBooth> {
-            PhotoBoothScreen(
-                navController = navController,
-                wsRepo = wsRepo,
-            )
-        }
-        composable<Screen.Settings> {
-            SettingsScreen(navController = navController)
-        }
-        composable<Screen.Web> { backStackEntry ->
-            val screen = try {
-                backStackEntry.toRoute<Screen.Web>()
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to parse Web route: ${e.message}")
-                null
+    // No Scaffold/bottom bar — NavHost fills the screen, with a top-anchored
+    // overlay box so the FollowStopPill can ride above every screen whenever
+    // the server-side follow controller is ACTIVE (driven by `follow_update`
+    // WS messages in FollowStopPill itself).
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Home,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            composable<Screen.Home> {
+                HomeScreen(viewModel = homeViewModel, navController = navController)
             }
-            WebViewScreen(
-                url = screen?.url ?: "https://2026.siliconvalleywie.org/",
-                navController = navController
-            )
+            composable<Screen.Chat> {
+                ConversationScreen(viewModel = conversationViewModel, navController = navController)
+            }
+            composable<Screen.Map> {
+                NavigationMapScreen(viewModel = navMapViewModel, navController = navController)
+            }
+            composable<Screen.Facilities> {
+                FacilitiesScreen(viewModel = facilitiesViewModel, navController = navController)
+            }
+            composable<Screen.EventInfo> {
+                EventInfoScreen(viewModel = eventInfoViewModel, navController = navController)
+            }
+            composable<Screen.PhotoBooth> {
+                PhotoBoothScreen(
+                    navController = navController,
+                    wsRepo = wsRepo,
+                )
+            }
+            composable<Screen.Settings> {
+                SettingsScreen(navController = navController)
+            }
+            composable<Screen.Web> { backStackEntry ->
+                val screen = try {
+                    backStackEntry.toRoute<Screen.Web>()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to parse Web route: ${e.message}")
+                    null
+                }
+                WebViewScreen(
+                    url = screen?.url ?: "https://2026.siliconvalleywie.org/",
+                    navController = navController
+                )
+            }
+            composable<Screen.Follow> {
+                FollowScreen(followController = followController, navController = navController)
+            }
         }
-        composable<Screen.Follow> {
-            FollowScreen(followController = followController, navController = navController)
-        }
+
+        FollowStopPill(
+            wsRepo = wsRepo,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
     }
 }
 
