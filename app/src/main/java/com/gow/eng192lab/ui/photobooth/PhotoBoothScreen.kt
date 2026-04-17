@@ -14,18 +14,13 @@ import com.gow.eng192lab.ui.conversation.VideoStreamManager
  * Top-level Photo Booth screen composable.
  *
  * Delegates rendering to the appropriate sub-composable based on [PhotoBoothUiState]:
- * - [StylePickerGrid]    — style selection (StylePicker state)
+ * - [StylePickerGrid]    — 2x2 style card grid (StylePicker state)
  * - [CountdownOverlay]   — 3-2-1 countdown (Countdown state)
- * - [ProcessingScreen]   — server-side SD inference in progress (Processing state)
+ * - [ProcessingScreen]   — server-side inference in progress (Processing state)
  * - [ResultScreen]       — styled result with crossfade + QR + retake (Result state)
  *
- * Photo capture is done by snapshotting the next JPEG emitted by the shared
- * [VideoStreamManager] rather than opening a second Camera2 session — Jackie's
- * USB camera only accepts one owner, so opening it here collided with the
- * live conversation video stream and silently failed.
- *
- * Uses `remember { PhotoBoothViewModel(wsRepo) }` to avoid Android ViewModel lifecycle
- * dependency, matching the ConversationViewModel pattern in AppNavigation.kt.
+ * Photo capture reuses the shared [VideoStreamManager] via `snapshotNextFrame` rather
+ * than opening a second Camera2 session — Jackie's USB camera only accepts one owner.
  */
 @Composable
 fun PhotoBoothScreen(
@@ -36,7 +31,6 @@ fun PhotoBoothScreen(
     val viewModel = remember { PhotoBoothViewModel(wsRepo) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Notify server when screen enters / exits
     LaunchedEffect(Unit) { viewModel.onScreenEntered() }
     DisposableEffect(Unit) {
         onDispose { viewModel.onScreenExited() }
@@ -57,10 +51,14 @@ fun PhotoBoothScreen(
     when (val state = uiState) {
         is PhotoBoothUiState.StylePicker -> StylePickerGrid(
             selectedStyle = state.selectedStyle,
-            mode = state.mode,
-            onStyleSelected = viewModel::onStyleSelected,
-            onModeSelected = viewModel::onModeSelected,
-            onTakePhoto = viewModel::onTakePhoto,
+            onStyleTapped = { key ->
+                viewModel.onStyleSelected(key)
+                viewModel.onTakePhoto()
+            },
+            onNormalCamera = {
+                viewModel.onStyleSelected(STYLE_NORMAL)
+                viewModel.onTakePhoto()
+            },
             onBack = { navController.popBackStack() }
         )
         is PhotoBoothUiState.Countdown -> CountdownOverlay(

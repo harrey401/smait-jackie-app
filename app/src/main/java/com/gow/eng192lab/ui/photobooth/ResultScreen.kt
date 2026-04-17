@@ -98,11 +98,8 @@ fun ResultScreen(
     val styleOption = remember(state.styleKey) {
         STYLE_OPTIONS.firstOrNull { it.key == state.styleKey }
     }
-    val modeLabel = remember(state.mode) {
-        if (state.mode == MODE_SCENE) "Scene" else "Portrait"
-    }
-    val styleLabel = remember(styleOption, modeLabel) {
-        styleOption?.let { "${it.label} · $modeLabel" } ?: "Photo Booth · $modeLabel"
+    val styleLabel = remember(styleOption) {
+        styleOption?.label ?: "Photo Booth"
     }
     val theme = remember(state.styleKey) { styleThemeFor(state.styleKey) }
 
@@ -350,35 +347,23 @@ private fun styleThemeFor(styleKey: String?): StyleTheme = when (styleKey) {
         accent = Color(0xFFFF2EA8),
         confettiColors = listOf(Color(0xFFFF2EA8), Color(0xFF00E5FF), Color(0xFF7C4DFF)),
     )
-    "anime" -> StyleTheme(
-        topBg = Color(0xFF0F1A2B),
-        bottomBg = Color(0xFF1C2C42),
-        accent = Color(0xFFFFCC70),
-        confettiColors = listOf(Color(0xFFFFCC70), Color(0xFFFFADAD), Color(0xFF9DE0F7)),
+    "ghibli" -> StyleTheme(
+        topBg = Color(0xFF0A2013),
+        bottomBg = Color(0xFF12321E),
+        accent = Color(0xFF7DD3A0),
+        confettiColors = listOf(Color(0xFF7DD3A0), Color(0xFFFFD580), Color(0xFFA7E1FF)),
     )
-    "pop_art" -> StyleTheme(
-        topBg = Color(0xFF1A0A02),
-        bottomBg = Color(0xFF2A1200),
-        accent = Color(0xFFFFCA00),
-        confettiColors = listOf(Color(0xFFFF3B30), Color(0xFFFFCA00), Color(0xFF0E8AFF)),
+    "pixar" -> StyleTheme(
+        topBg = Color(0xFF001030),
+        bottomBg = Color(0xFF0A1F4A),
+        accent = Color(0xFF67E8F9),
+        confettiColors = listOf(Color(0xFF67E8F9), Color(0xFF8B5CF6), Color(0xFFFFD580)),
     )
-    "robot_vision" -> StyleTheme(
-        topBg = Color(0xFF001810),
-        bottomBg = Color(0xFF002A1A),
-        accent = Color(0xFF00FF9C),
-        confettiColors = listOf(Color(0xFF00FF9C), Color(0xFF00E5FF), Color(0xFFB0FFD0)),
-    )
-    "oil_painting" -> StyleTheme(
-        topBg = Color(0xFF1A0F00),
-        bottomBg = Color(0xFF2A1A05),
-        accent = Color(0xFFDCA85A),
-        confettiColors = listOf(Color(0xFFDCA85A), Color(0xFFA83F2C), Color(0xFFE8D9B3)),
-    )
-    "pixel_art" -> StyleTheme(
-        topBg = Color(0xFF0A0020),
-        bottomBg = Color(0xFF15003A),
-        accent = Color(0xFF8A63FF),
-        confettiColors = listOf(Color(0xFF8A63FF), Color(0xFFFF4D7E), Color(0xFF4DE4C4)),
+    "claymation" -> StyleTheme(
+        topBg = Color(0xFF2A1006),
+        bottomBg = Color(0xFF3D1A0A),
+        accent = Color(0xFFFDA4AF),
+        confettiColors = listOf(Color(0xFFFDA4AF), Color(0xFFF59E0B), Color(0xFFFFE4C4)),
     )
     else -> StyleTheme(
         topBg = Color(0xFF0D0D14),

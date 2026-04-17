@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -17,24 +16,32 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.gow.eng192lab.data.model.RobotState
 import com.gow.eng192lab.data.model.UiEvent
 import com.gow.eng192lab.ui.common.SubScreenTopBar
 import com.gow.eng192lab.ui.common.SurveyScreen
 import com.gow.eng192lab.ui.common.WieBackground
+
+// Debug preview: cycle states on long-press, show survey on double-tap.
+private val DEBUG_STATES = RobotState.entries.toTypedArray()
 
 /**
  * Primary interaction screen for conversing with Jackie.
  *
  * Layout:
  * - SubScreenTopBar with back arrow
- * - Left: RobotAvatar (40%)
- * - Right: Chat transcript (60%)
+ * - Left (35%): [LabDashboard] — lab identity, mascot tile, rotating suggestions
+ * - Right (65%): Chat transcript with a small floating [StatusOrb] in the bottom-right
  *
  * When the session ends (robot state returns to IDLE after conversing),
  * a full-screen [SurveyScreen] overlay replaces the conversation view.
@@ -45,12 +52,16 @@ fun ConversationScreen(
     navController: NavHostController
 ) {
     val messages by viewModel.transcript.collectAsState()
-    val robotState by viewModel.robotState.collectAsState()
+    val realRobotState by viewModel.robotState.collectAsState()
     val showSurvey by viewModel.showSurvey.collectAsState()
+
+    // Debug state preview — overrides real state when cycling
+    var debugStateIndex by remember { mutableIntStateOf(-1) }
+    var debugShowSurvey by remember { mutableStateOf(false) }
+    val robotState = if (debugStateIndex >= 0) DEBUG_STATES[debugStateIndex] else realRobotState
 
     val listState = rememberLazyListState()
 
-    // Fresh session every time this screen appears; clean up on leave
     LaunchedEffect(Unit) {
         viewModel.onScreenEntered()
     }
@@ -78,11 +89,16 @@ fun ConversationScreen(
         }
     }
 
-    // When survey is visible, show full-screen survey overlay instead of conversation
-    if (showSurvey) {
+    if (showSurvey || debugShowSurvey) {
         SurveyScreen(
-            onSubmit = { survey -> viewModel.submitSurvey(survey) },
-            onDismiss = { survey -> viewModel.dismissSurvey(survey) }
+            onSubmit = { survey ->
+                debugShowSurvey = false
+                viewModel.submitSurvey(survey)
+            },
+            onDismiss = { survey ->
+                debugShowSurvey = false
+                viewModel.dismissSurvey(survey)
+            }
         )
         return
     }
@@ -98,31 +114,30 @@ fun ConversationScreen(
 
             Box(modifier = Modifier.weight(1f)) {
                 Row(modifier = Modifier.fillMaxSize()) {
-                    // Left: Robot avatar (40%)
+                    // Left: Lab dashboard (35%)
+                    LabDashboard(
+                        robotState = robotState,
+                        onMascotLongPress = {
+                            debugStateIndex = (debugStateIndex + 1) % DEBUG_STATES.size
+                        },
+                        onMascotDoubleTap = {
+                            debugShowSurvey = true
+                        },
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(0.35f)
+                    )
+
+                    // Right: Transcript (65%) with floating StatusOrb in the bottom-right
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .weight(0.4f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        RobotAvatar(
-                            robotState = robotState,
-                            modifier = Modifier.size(240.dp)
-                        )
-                    }
-
-                    // Right: Transcript + camera button (60%)
-                    Column(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(0.6f)
+                            .weight(0.65f)
                             .padding(end = 12.dp)
                     ) {
                         LazyColumn(
                             state = listState,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             items(messages, key = { it.id }) { message ->
                                 ChatBubble(message = message)
@@ -146,9 +161,14 @@ fun ConversationScreen(
                             }
                         }
 
+                        StatusOrb(
+                            robotState = robotState,
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 16.dp, bottom = 16.dp)
+                        )
                     }
                 }
-
             }
         }
     }
