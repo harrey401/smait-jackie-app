@@ -179,6 +179,11 @@ class ConversationViewModel(
             sendSessionCommand("end")
             sessionActive = false
         }
+        // Flush the AudioTrack locally so any PCM chunks already buffered
+        // from the previous response stop playing immediately. The server
+        // also cancels its own TTS synthesis on app_session_end, but the
+        // already-queued audio lives in AudioTrack until we flush it.
+        ttsPlayer.stop()
         clearTranscript()
         silenceJob?.cancel()
     }
@@ -290,8 +295,13 @@ class ConversationViewModel(
                 }
             }
             "tts_control" -> {
-                val cmd = parseTextField(payload, "command")
-                if (cmd == "stop") ttsPlayer.stop()
+                // Server sends {"type":"tts_control","action":"start"|"end"|"stop"}.
+                // "stop" is the explicit cancellation path (new-turn barge-in,
+                // app session exit) — drop every buffered PCM chunk right now
+                // so the AudioTrack doesn't keep playing the old utterance.
+                val action = parseTextField(payload, "action")
+                    ?: parseTextField(payload, "command")  // legacy field name
+                if (action == "stop") ttsPlayer.stop()
             }
             else -> Log.v(TAG, "Ignoring JSON message type: ${event.type}")
         }
