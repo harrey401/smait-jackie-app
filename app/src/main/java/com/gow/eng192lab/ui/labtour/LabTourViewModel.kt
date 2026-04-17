@@ -2,11 +2,14 @@ package com.gow.eng192lab.ui.labtour
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.gow.eng192lab.TtsAudioPlayer
+import com.gow.eng192lab.data.websocket.WebSocketEvent
 import com.gow.eng192lab.data.websocket.WebSocketRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 private const val TAG = "LabTour"
@@ -49,6 +52,19 @@ class LabTourViewModel(
     private val _currentStopIndex = MutableStateFlow(0)
     val currentStopIndex: StateFlow<Int> = _currentStopIndex.asStateFlow()
 
+    init {
+        // Tour narration must not start until Jackie physically arrives at
+        // the POI. We listen for `nav_status` from the server and gate the
+        // Navigating → Narrating transition on `status == "arrived"`.
+        viewModelScope.launch {
+            wsRepo.events.collect { event ->
+                if (event is WebSocketEvent.JsonMessage && event.type == "nav_status") {
+                    handleNavStatus(event.payload)
+                }
+            }
+        }
+    }
+
     fun loadTour(tourData: TourData) {
         _tourData.value = tourData
         _tourState.value = TourState.NotStarted
@@ -58,7 +74,6 @@ class LabTourViewModel(
     fun startTour() {
         val data = _tourData.value ?: return
         _tourState.value = TourState.Introduction
-        // Send introduction as TTS via server
         sendTtsRequest(data.introduction)
         Log.i(TAG, "Tour started: ${data.tourName}")
     }
@@ -94,7 +109,6 @@ class LabTourViewModel(
         _currentStopIndex.value = index
         _tourState.value = TourState.Navigating(index, stop.name)
 
-        // Send navigation command to server
         val navCmd = JSONObject().apply {
             put("type", "lab_tour_navigate")
             put("poi", stop.poi)
@@ -102,10 +116,7 @@ class LabTourViewModel(
         }
         wsRepo.send(navCmd.toString())
         Log.i(TAG, "Navigating to stop $index: ${stop.name} (POI: ${stop.poi})")
-
-        // For now, immediately transition to narrating
-        // In production, wait for nav_status "arrived" from server
-        arriveAtStop(index)
+        // Wait for server `nav_status` arrived — handled in handleNavStatus().
     }
 
     fun arriveAtStop(index: Int) {
@@ -123,6 +134,28 @@ class LabTourViewModel(
             _tourState.value = TourState.WaitingForNext(index, stop.name)
         } else {
             nextStop()
+        }
+    }
+
+    private fun handleNavStatus(payload: String) {
+        val current = _tourState.value as? TourState.Navigating ?: return
+        val status = try {
+            JSONObject(payload).optString("status", "")
+        } catch (_: Exception) {
+            ""
+        }
+        when (status) {
+            "arrived" -> {
+                Log.i(TAG, "Arrived at stop ${current.stopIndex}: ${current.stopName}")
+                arriveAtStop(current.stopIndex)
+            }
+            "failed" -> {
+                // Don't leave the user stuck on "Navigating..." forever —
+                // fall through to narration at the current location.
+                Log.w(TAG, "Navigation failed for stop ${current.stopIndex}; playing narration anyway")
+                arriveAtStop(current.stopIndex)
+            }
+            // "navigating" and any other intermediate status: keep waiting.
         }
     }
 
