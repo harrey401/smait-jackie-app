@@ -28,7 +28,7 @@
       "label": "Photo Booth",
       "action": "navigate:photobooth",
       "icon": "camera",
-      "description": "Take a selfie with Jackie the robot!"
+      "description": "AI-Styled Photos"
     },
     {
       "label": "Schedule",
@@ -51,6 +51,10 @@
     {
       "name": "San José State University",
       "logoAsset": "sponsor_sjsu.png"
+    },
+    {
+      "name": "SJSU Mechanical Engineering",
+      "logoAsset": "sjsu_logo.png"
     },
     {
       "name": "SJSU Research Foundation",

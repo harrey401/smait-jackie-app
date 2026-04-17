@@ -121,11 +121,11 @@ fun HomeScreen(
                     contentScale = ContentScale.Fit
                 )
 
-                // HFES banner (center)
+                // HFES banner (center) — stretches to right edge now that ME logo moved to sponsor bar
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 40.dp),
+                        .padding(end = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
@@ -135,16 +135,6 @@ fun HomeScreen(
                         contentScale = ContentScale.Fit
                     )
                 }
-
-                // SJSU ME logo (right, inset from edge)
-                Image(
-                    painter = painterResource(id = R.drawable.sjsu_logo),
-                    contentDescription = "SJSU Mechanical Engineering",
-                    modifier = Modifier
-                        .height(400.dp)
-                        .padding(end = 40.dp),
-                    contentScale = ContentScale.Fit
-                )
             }
 
             // 2. Cards — centered 2x2 grid, double spread

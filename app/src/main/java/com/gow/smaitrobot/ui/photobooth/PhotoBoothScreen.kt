@@ -5,41 +5,31 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-// R import removed — style cards use gradient designs, not drawable thumbnails
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.foundation.border
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,8 +38,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,14 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-// painterResource not needed — style cards use gradient + emoji design
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -106,25 +90,16 @@ data class StyleOption(
 private val STYLES = listOf(
     StyleOption("ghibli", "Ghibli",
         Color(0xFF4ADE80), Color(0xFF059669)),         // green meadow
-    StyleOption("cyberpunk", "Cyberpunk",
-        Color(0xFFE879F9), Color(0xFF6D28D9)),         // neon magenta-purple
-    StyleOption("gta", "GTA",
-        Color(0xFFFB923C), Color(0xFFDC2626)),         // orange-red sunset
-    StyleOption("pop_art", "Pop Art",
-        Color(0xFFFACC15), Color(0xFFEF4444)),         // yellow-red bold
-    StyleOption("oil_painting", "Oil Painting",
-        Color(0xFFD4A574), Color(0xFF78350F)),         // warm umber
-    StyleOption("pixel_art", "Pixel Art",
-        Color(0xFF60A5FA), Color(0xFF1D4ED8)),         // retro blue
-    StyleOption("comic_hero", "Comic Hero",
-        Color(0xFFF87171), Color(0xFF1E40AF)),         // red-blue hero
-    StyleOption("claymation", "Claymation",
-        Color(0xFFFDA4AF), Color(0xFFF59E0B)),         // clay pink-amber
     StyleOption("pixar", "Pixar 3D",
         Color(0xFF67E8F9), Color(0xFF8B5CF6)),         // cyan-purple
-    StyleOption("action_figure", "Action Figure",
-        Color(0xFFA78BFA), Color(0xFFEC4899)),         // purple-pink toy
+    StyleOption("cyberpunk", "Cyberpunk",
+        Color(0xFFE879F9), Color(0xFF6D28D9)),         // neon magenta-purple
+    StyleOption("claymation", "Claymation",
+        Color(0xFFFDA4AF), Color(0xFFF59E0B)),         // clay pink-amber
 )
+
+// Sentinel style key — server returns the raw camera JPEG with no styling.
+private const val STYLE_NORMAL = "normal"
 
 /**
  * Photo booth states.
@@ -156,9 +131,7 @@ private sealed class BoothState {
 @Composable
 fun PhotoBoothScreen(navController: NavHostController, wsRepo: WebSocketRepository) {
     var state: BoothState by remember { mutableStateOf(BoothState.Picking) }
-    var selectedTab by remember { mutableStateOf(0) } // 0 = Themes, 1 = Custom
     var selectedStyle by remember { mutableStateOf("ghibli") }
-    var customPrompt by remember { mutableStateOf("") }
 
     // Listen for server responses
     LaunchedEffect(Unit) {
@@ -212,26 +185,31 @@ fun PhotoBoothScreen(navController: NavHostController, wsRepo: WebSocketReposito
             when (currentState) {
                 is BoothState.Picking -> {
                     PickerScreen(
-                        selectedTab = selectedTab,
-                        onTabChange = { selectedTab = it },
+                        selectedTab = 0,
+                        onTabChange = {},
                         selectedStyle = selectedStyle,
-                        onStyleSelect = { selectedStyle = it },
-                        customPrompt = customPrompt,
-                        onCustomPromptChange = { customPrompt = it },
-                        onNext = {
-                            val style = if (selectedTab == 0) selectedStyle else "custom"
-                            val prompt = if (selectedTab == 1) customPrompt else ""
-                            // Send style selection to server
+                        onStyleSelect = { style ->
+                            selectedStyle = style
                             val json = JSONObject().apply {
                                 put("type", "photo_booth_style")
                                 put("style", style)
                                 put("mode", "portrait")
-                                if (prompt.isNotBlank()) {
-                                    put("custom_prompt", prompt)
-                                }
                             }
                             wsRepo.send(json.toString())
-                            state = BoothState.Capturing(style, "portrait", prompt)
+                            state = BoothState.Capturing(style, "portrait")
+                        },
+                        customPrompt = "",
+                        onCustomPromptChange = {},
+                        onNext = {},
+                        onNormalCamera = {
+                            // Skip styling: send "normal" and go straight to capture.
+                            val json = JSONObject().apply {
+                                put("type", "photo_booth_style")
+                                put("style", STYLE_NORMAL)
+                                put("mode", "portrait")
+                            }
+                            wsRepo.send(json.toString())
+                            state = BoothState.Capturing(STYLE_NORMAL, "portrait", "")
                         },
                         onBack = { navController.popBackStack() }
                     )
@@ -268,6 +246,14 @@ fun PhotoBoothScreen(navController: NavHostController, wsRepo: WebSocketReposito
 }
 
 // ── Picker Screen ────────────────────────────────────────────────────────────
+//
+// Matches the Home screen 2x2 card layout: 4 style cards fill the center,
+// with a small "Normal Camera" link below. Tapping a style goes directly to
+// capture — no separate "Take Photo" step needed.
+
+// Card colors matching HomeScreen diagonal pattern
+private val StylePrimary = Color(0xFF2D1B69).copy(alpha = 0.85f)
+private val StyleSecondary = Color(0xFF4A3278).copy(alpha = 0.85f)
 
 @Composable
 private fun PickerScreen(
@@ -278,12 +264,13 @@ private fun PickerScreen(
     customPrompt: String,
     onCustomPromptChange: (String) -> Unit,
     onNext: () -> Unit,
+    onNormalCamera: () -> Unit,
     onBack: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(horizontal = 24.dp, vertical = 8.dp)
     ) {
         // Top bar
         Row(
@@ -299,7 +286,7 @@ private fun PickerScreen(
                 )
             }
             Text(
-                text = "Photo Booth",
+                text = "Choose Your Style",
                 color = TextPrimary,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
@@ -307,163 +294,140 @@ private fun PickerScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Mode tabs: Themes | Custom
-        Row(
+        // 2x2 grid — same layout as HomeScreen cards
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(CardBg)
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .weight(1f)
+                .fillMaxWidth(0.85f)
+                .align(Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically)
         ) {
-            TabButton(
-                label = "Themes",
-                icon = Icons.Filled.Palette,
-                selected = selectedTab == 0,
-                onClick = { onTabChange(0) },
-                modifier = Modifier.weight(1f)
-            )
-            TabButton(
-                label = "Custom",
-                icon = Icons.Filled.Edit,
-                selected = selectedTab == 1,
-                onClick = { onTabChange(1) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Content area
-        Box(modifier = Modifier.weight(1f)) {
-            if (selectedTab == 0) {
-                ThemesGrid(
-                    selectedStyle = selectedStyle,
-                    onStyleSelect = onStyleSelect
-                )
-            } else {
-                CustomPromptInput(
-                    prompt = customPrompt,
-                    onPromptChange = onCustomPromptChange
-                )
+            // Top row
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                STYLES.getOrNull(0)?.let { style ->
+                    BoothStyleCard(
+                        style = style,
+                        cardIndex = 0,
+                        onClick = {
+                            onStyleSelect(style.key)
+                            onNext()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
+                STYLES.getOrNull(1)?.let { style ->
+                    BoothStyleCard(
+                        style = style,
+                        cardIndex = 1,
+                        onClick = {
+                            onStyleSelect(style.key)
+                            onNext()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
+            }
+            // Bottom row
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                STYLES.getOrNull(2)?.let { style ->
+                    BoothStyleCard(
+                        style = style,
+                        cardIndex = 2,
+                        onClick = {
+                            onStyleSelect(style.key)
+                            onNext()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
+                STYLES.getOrNull(3)?.let { style ->
+                    BoothStyleCard(
+                        style = style,
+                        cardIndex = 3,
+                        onClick = {
+                            onStyleSelect(style.key)
+                            onNext()
+                        },
+                        modifier = Modifier.weight(1f).fillMaxHeight()
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Take Photo button
-        val canProceed = selectedTab == 0 || customPrompt.isNotBlank()
-        Button(
-            onClick = onNext,
-            enabled = canProceed,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AccentPurple,
-                disabledContainerColor = AccentPurple.copy(alpha = 0.3f)
-            )
+        // Normal Camera — small secondary link at the bottom
+        androidx.compose.material3.TextButton(
+            onClick = onNormalCamera,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Icon(Icons.Filled.AutoAwesome, contentDescription = null, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Take Photo", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Icon(
+                Icons.Filled.PhotoCamera,
+                contentDescription = null,
+                tint = TextSecondary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Normal Camera", fontSize = 18.sp, color = TextSecondary)
         }
     }
 }
 
+// ── Style Card (Home-page style) ────────────────────────────────────────────
+
+/**
+ * Photo booth style card — styled preview image background with text overlay.
+ * Tapping goes straight to camera capture.
+ */
 @Composable
-private fun TabButton(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    selected: Boolean,
+private fun BoothStyleCard(
+    style: StyleOption,
+    cardIndex: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bg = if (selected) AccentPurple else Color.Transparent
-    val textColor = if (selected) Color.White else TextSecondary
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(bg)
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = textColor, modifier = Modifier.size(20.dp))
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(label, color = textColor, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        }
-    }
-}
-
-// ── Themes Grid ──────────────────────────────────────────────────────────────
-
-@Composable
-private fun ThemesGrid(
-    selectedStyle: String,
-    onStyleSelect: (String) -> Unit
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(5),
-        contentPadding = PaddingValues(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(STYLES) { style ->
-            StyleCard(
-                style = style,
-                selected = style.key == selectedStyle,
-                onClick = { onStyleSelect(style.key) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun StyleCard(
-    style: StyleOption,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val borderWidth by animateDpAsState(
-        targetValue = if (selected) 3.dp else 0.dp,
-        label = "border"
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val previewRes = context.resources.getIdentifier(
+        "style_preview_${style.key}", "drawable", context.packageName
     )
 
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .aspectRatio(0.85f)
-            .then(
-                if (selected) Modifier.border(borderWidth, SelectedBorder, RoundedCornerShape(16.dp))
-                else Modifier
-            ),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (selected) CardBg.copy(alpha = 0.9f) else CardBg
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (selected) 8.dp else 2.dp
-        )
+        modifier = modifier.padding(4.dp),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            style.gradientStart.copy(alpha = if (selected) 0.7f else 0.4f),
-                            style.gradientEnd.copy(alpha = if (selected) 0.8f else 0.5f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(16.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Background: style preview image
+            if (previewRes != 0) {
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = previewRes),
+                    contentDescription = style.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-        ) {
+            } else {
+                // Fallback: purple gradient
+                val cardColor = if (cardIndex == 0 || cardIndex == 3) StylePrimary else StyleSecondary
+                Box(modifier = Modifier.fillMaxSize().background(cardColor))
+            }
+
+            // Dark scrim so text is always readable over the image
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
+            )
+
+            // Style name centered
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -471,12 +435,11 @@ private fun StyleCard(
                 Text(
                     text = style.name,
                     color = Color.White,
-                    fontSize = 17.sp,
+                    fontSize = 74.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    lineHeight = 78.sp
                 )
             }
         }
@@ -484,58 +447,6 @@ private fun StyleCard(
 }
 
 // ── Custom Prompt ────────────────────────────────────────────────────────────
-
-@Composable
-private fun CustomPromptInput(
-    prompt: String,
-    onPromptChange: (String) -> Unit
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Describe your look",
-            color = TextPrimary,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "e.g. \"a medieval wizard in an enchanted forest\" or \"underwater with tropical fish\"",
-            color = TextSecondary,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        OutlinedTextField(
-            value = prompt,
-            onValueChange = onPromptChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .height(120.dp),
-            placeholder = { Text("Type your idea here...", color = TextSecondary) },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
-                cursorColor = AccentPurple,
-                focusedBorderColor = AccentPurple,
-                unfocusedBorderColor = TextSecondary.copy(alpha = 0.3f),
-                focusedContainerColor = CardBg,
-                unfocusedContainerColor = CardBg
-            ),
-            shape = RoundedCornerShape(16.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-            maxLines = 4
-        )
-    }
-}
 
 // ── Processing Screen ────────────────────────────────────────────────────────
 
