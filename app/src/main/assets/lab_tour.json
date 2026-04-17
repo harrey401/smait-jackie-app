@@ -1,30 +1,36 @@
 {
   "tourName": "ENG192 Robotics Lab Tour",
-  "introduction": "Welcome to the ENG192 Robotics Lab! I'm Jackie, and I'll be your guide today. Let's explore what we do here. Follow me!",
-  "conclusion": "That concludes our lab tour! I hope you enjoyed learning about our robotics research. Feel free to ask me any questions — just head back to the home screen and tap Ask Jackie!",
+  "introduction": "Welcome to the ENG192 Robotics Lab! I'm Jackie, and I'll be your guide today. We'll make five stops around the lab. Follow me!",
+  "conclusion": "That concludes our lab tour! I hope you enjoyed seeing what we do here. Feel free to ask me any questions — just head back to the home screen and tap Ask Jackie!",
   "stops": [
     {
-      "name": "Lab Entrance",
-      "poi": "lab_entrance",
-      "narration": "This is the BioRob Lab, part of SJSU's Mechanical Engineering department. We focus on robotics, human-robot interaction, and biomedical devices. The lab is led by Dr. Lin Jiang and supports both undergraduate and graduate research.",
+      "name": "Open Lab Area",
+      "poi": "open lab",
+      "narration": "We're starting here in the open lab area. This is the main floor of ENG192 where students gather, collaborate, and run experiments. It's a flexible space — lectures happen here, demos happen here, and most of the hands-on robotics learning starts right in this room.",
       "waitForTap": true
     },
     {
-      "name": "Robot Workstation",
-      "poi": "robot_workstation",
-      "narration": "Here's where we build and program our robots. You're looking at workstations equipped with ROS, sensor arrays, and embedded computing platforms. Students work on everything from navigation algorithms to computer vision.",
+      "name": "Industrial Robots",
+      "poi": "industrial robot",
+      "narration": "Next up, the industrial robots station. Over here we have our SCARA robot and other industrial arms used for teaching automation, pick-and-place tasks, and motion programming. Students learn how real factory-grade robots are controlled, how to plan trajectories, and how to integrate grippers and sensors.",
       "waitForTap": true
     },
     {
-      "name": "3D Printing Area",
-      "poi": "3d_printing",
-      "narration": "Our 3D printing station handles rapid prototyping for robot parts, custom sensor mounts, and mechanical fixtures. We use both FDM and resin printers for different precision needs.",
+      "name": "Project Table",
+      "poi": "project table",
+      "narration": "This is the project table. It's exactly what it sounds like — a dedicated workspace where students sit down and build. Capstone teams, class projects, and research prototypes all come together right here.",
       "waitForTap": true
     },
     {
-      "name": "Testing Area",
-      "poi": "testing_area",
-      "narration": "This is our testing zone where we validate robot behaviors in controlled conditions before deploying them in real-world scenarios. We test navigation, object recognition, and human-robot interaction protocols here.",
+      "name": "Research Robots",
+      "poi": "franka",
+      "narration": "Here are our research robots — the Franka Emika and the Aubo arm. These are collaborative robots used for advanced research in manipulation, human-robot interaction, and AI-driven control. Graduate students use these platforms for thesis work on things like learning from demonstration and safe interaction.",
+      "waitForTap": true
+    },
+    {
+      "name": "Fabrication Room",
+      "poi": "printer",
+      "narration": "Our last stop is the fabrication room. This is where our 3D printers live. Students prototype custom robot parts, sensor mounts, and mechanical fixtures here.",
       "waitForTap": true
     }
   ]
