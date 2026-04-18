@@ -1,36 +1,36 @@
 {
   "tourName": "ENG192 Robotics Lab Tour",
   "introduction": "Welcome to the ENG192 Robotics Lab! I'm Jackie, and I'll be your guide today. We'll make five stops around the lab. Follow me!",
-  "conclusion": "That concludes our lab tour! I hope you enjoyed seeing what we do here. Feel free to ask me any questions — just head back to the home screen and tap Ask Jackie!",
+  "conclusion": "That concludes our lab tour. I hope you enjoyed seeing what we do here. Feel free to ask me any questions. Just head back to the home screen and tap Ask Jackie!",
   "stops": [
     {
       "name": "Open Lab Area",
       "poi": "open lab",
-      "narration": "We're starting here in the open lab area. This is the main floor of ENG192 where students gather, collaborate, and run experiments. It's a flexible space — lectures happen here, demos happen here, and most of the hands-on robotics learning starts right in this room.",
+      "narration": "We're starting here in the open lab area. This is the main floor of ENG192, where students gather, collaborate, and run experiments. It's a flexible space. Lectures happen here, demos happen here, and most of the hands on robotics learning starts right in this room.",
       "waitForTap": true
     },
     {
       "name": "Industrial Robots",
       "poi": "industrial robot",
-      "narration": "Next up, the industrial robots station. Over here we have our SCARA robot and other industrial arms used for teaching automation, pick-and-place tasks, and motion programming. Students learn how real factory-grade robots are controlled, how to plan trajectories, and how to integrate grippers and sensors.",
+      "narration": "Next up, the industrial robots station. Over here we have our SCARA robot and other industrial arms used for teaching automation, pick and place tasks, and motion programming. Students learn how real factory grade robots are controlled, how to plan trajectories, and how to integrate grippers and sensors.",
       "waitForTap": true
     },
     {
       "name": "Project Table",
       "poi": "project table",
-      "narration": "This is the project table. It's exactly what it sounds like — a dedicated workspace where students sit down and build. Capstone teams, class projects, and research prototypes all come together right here.",
+      "narration": "This is the project table. It's exactly what it sounds like. A dedicated workspace where students sit down and build. Capstone teams, class projects, and research prototypes all come together right here.",
       "waitForTap": true
     },
     {
       "name": "Research Robots",
       "poi": "franka",
-      "narration": "Here are our research robots — the Franka Emika and the Aubo arm. These are collaborative robots used for advanced research in manipulation, human-robot interaction, and AI-driven control. Graduate students use these platforms for thesis work on things like learning from demonstration and safe interaction.",
+      "narration": "Here are our research robots, the Franka Emika and the Aubo arm. These are collaborative robots used for advanced research in manipulation, human robot interaction, and AI driven control. Graduate students use these platforms for thesis work on things like learning from demonstration and safe interaction.",
       "waitForTap": true
     },
     {
       "name": "Fabrication Room",
       "poi": "printer",
-      "narration": "Our last stop is the fabrication room. This is where our 3D printers live. Students prototype custom robot parts, sensor mounts, and mechanical fixtures here.",
+      "narration": "Our last stop is the fabrication room. This is where our 3D printers live. Students prototype custom robot parts, sensor mounts, and mechanical fixtures right in this area.",
       "waitForTap": true
     }
   ]

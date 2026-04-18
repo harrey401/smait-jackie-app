@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.gow.eng192lab.TtsAudioPlayer
 import com.gow.eng192lab.data.websocket.WebSocketEvent
 import com.gow.eng192lab.data.websocket.WebSocketRepository
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +15,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 private const val TAG = "LabTour"
+private const val AUTO_ADVANCE_DELAY_MS = 15_000L
 
 data class TourStop(
     val name: String,
@@ -52,14 +55,21 @@ class LabTourViewModel(
     private val _currentStopIndex = MutableStateFlow(0)
     val currentStopIndex: StateFlow<Int> = _currentStopIndex.asStateFlow()
 
+    private var autoAdvanceJob: Job? = null
+
     init {
         // Tour narration must not start until Jackie physically arrives at
         // the POI. We listen for `nav_status` from the server and gate the
         // Navigating → Narrating transition on `status == "arrived"`.
+        // We also listen for `tts_control` so we can auto-advance the tour
+        // once each narration finishes playing, with a 15s visitor buffer.
         viewModelScope.launch {
             wsRepo.events.collect { event ->
-                if (event is WebSocketEvent.JsonMessage && event.type == "nav_status") {
-                    handleNavStatus(event.payload)
+                if (event is WebSocketEvent.JsonMessage) {
+                    when (event.type) {
+                        "nav_status" -> handleNavStatus(event.payload)
+                        "tts_control" -> handleTtsControl(event.payload)
+                    }
                 }
             }
         }
@@ -83,6 +93,7 @@ class LabTourViewModel(
     }
 
     fun nextStop() {
+        cancelAutoAdvance()
         val data = _tourData.value ?: return
         val nextIndex = _currentStopIndex.value + 1
         if (nextIndex < data.stops.size) {
@@ -94,11 +105,24 @@ class LabTourViewModel(
     }
 
     fun finishTour() {
+        cancelAutoAdvance()
+        val data = _tourData.value
+        val firstStop = data?.stops?.firstOrNull()
+        if (firstStop != null) {
+            val navCmd = JSONObject().apply {
+                put("type", "lab_tour_navigate")
+                put("poi", firstStop.poi)
+                put("stop_index", 0)
+            }
+            wsRepo.send(navCmd.toString())
+            Log.i(TAG, "Tour finished, returning to ${firstStop.name}")
+        }
         _tourState.value = TourState.Finished
         _currentStopIndex.value = 0
     }
 
     fun resetTour() {
+        cancelAutoAdvance()
         _tourState.value = TourState.NotStarted
         _currentStopIndex.value = 0
     }
@@ -127,14 +151,44 @@ class LabTourViewModel(
     }
 
     fun narrationComplete() {
+        cancelAutoAdvance()
         val data = _tourData.value ?: return
         val index = _currentStopIndex.value
         val stop = data.stops[index]
         if (stop.waitForTap) {
             _tourState.value = TourState.WaitingForNext(index, stop.name)
+            scheduleAutoAdvance { nextStop() }
         } else {
             nextStop()
         }
+    }
+
+    private fun handleTtsControl(payload: String) {
+        val action = try {
+            JSONObject(payload).optString("action", "")
+        } catch (_: Exception) {
+            ""
+        }
+        if (action != "end") return
+        when (_tourState.value) {
+            is TourState.Introduction -> proceedFromIntro()
+            is TourState.Narrating -> narrationComplete()
+            is TourState.Conclusion -> scheduleAutoAdvance { finishTour() }
+            else -> Unit
+        }
+    }
+
+    private fun scheduleAutoAdvance(action: () -> Unit) {
+        cancelAutoAdvance()
+        autoAdvanceJob = viewModelScope.launch {
+            delay(AUTO_ADVANCE_DELAY_MS)
+            action()
+        }
+    }
+
+    private fun cancelAutoAdvance() {
+        autoAdvanceJob?.cancel()
+        autoAdvanceJob = null
     }
 
     private fun handleNavStatus(payload: String) {
