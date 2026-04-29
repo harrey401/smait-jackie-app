@@ -1,0 +1,23 @@
+{
+  "eventName": "smAIT",
+  "tagline": "Office Assistant",
+  "logoAsset": "smait_logo.png",
+  "colors": {
+    "primary": "#76B900",
+    "secondary": "#8FCC1F",
+    "tertiary": "#5C8F00",
+    "background": "#000000",
+    "onPrimary": "#000000",
+    "onBackground": "#FFFFFF",
+    "surface": "#0E0E0E",
+    "onSurface": "#FFFFFF"
+  },
+  "fonts": {
+    "bodyFont": "Roboto",
+    "headingFont": "Roboto"
+  },
+  "cards": [],
+  "sponsors": [],
+  "schedule": [],
+  "speakers": []
+}

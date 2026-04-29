@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- SMAIT Brand -->
+    <color name="bg_deepest">#FF000000</color>
+    <color name="bg_primary">#FF000000</color>
+    <color name="bg_card">#FF0E0E0E</color>
+    <color name="bg_elevated">#FF1A1A1A</color>
+    <color name="bg_secondary">#FF0E0E0E</color>
+    <color name="bg_surface">#FF1A1A1A</color>
+
+    <color name="accent">#FF76B900</color>
+    <color name="accent_blue">#FF76B900</color>
+    <color name="accent_light">#FF8FCC1F</color>
+    <color name="accent_cyan">#FF8FCC1F</color>
+    <color name="accent_amber">#FF76B900</color>
+
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFB8B8B8</color>
+    <color name="text_muted">#FF6B6B6B</color>
+
+    <color name="bubble_user">#FF1A1A1A</color>
+    <color name="bubble_user_border">#FF76B900</color>
+    <color name="bubble_robot">#FF0E0E0E</color>
+    <color name="bubble_robot_border">#FF5C8F00</color>
+
+    <color name="speaker_user">#FF76B900</color>
+    <color name="speaker_robot">#FFB8B8B8</color>
+
+    <color name="status_connected">#FF76B900</color>
+    <color name="status_disconnected">#FFFF6B6B</color>
+    <color name="status_listening">#FF76B900</color>
+    <color name="status_thinking">#FF8FCC1F</color>
+    <color name="status_speaking">#FF5C8F00</color>
+
+    <color name="countdown_text">#FFFFFFFF</color>
+    <color name="overlay_dark">#CC000000</color>
+
+    <color name="settings_bg">#F00E0E0E</color>
+</resources>
