@@ -85,31 +85,31 @@ class ConversationViewModelTest {
         assertEquals("Hi there!", messages.first().text)
     }
 
-    // Test 3: state=listening updates robotState to LISTENING
+    // Test 3: robot_status=listening updates robotState to LISTENING
     @Test
     fun `state listening updates robotState to LISTENING`() = testScope.runTest {
         val vm = createViewModel()
-        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","value":"listening"}"""))
+        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","state":"engaged","robot_status":"listening"}"""))
         testScheduler.advanceTimeBy(100)
 
         assertEquals(RobotState.LISTENING, vm.robotState.value)
     }
 
-    // Test 4: state=thinking updates robotState to THINKING
+    // Test 4: robot_status=thinking updates robotState to THINKING
     @Test
     fun `state thinking updates robotState to THINKING`() = testScope.runTest {
         val vm = createViewModel()
-        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","value":"thinking"}"""))
+        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","state":"engaged","robot_status":"thinking"}"""))
         testScheduler.advanceTimeBy(100)
 
         assertEquals(RobotState.THINKING, vm.robotState.value)
     }
 
-    // Test 5: state=speaking updates robotState to SPEAKING
+    // Test 5: robot_status=speaking updates robotState to SPEAKING
     @Test
     fun `state speaking updates robotState to SPEAKING`() = testScope.runTest {
         val vm = createViewModel()
-        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","value":"speaking"}"""))
+        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","state":"engaged","robot_status":"speaking"}"""))
         testScheduler.advanceTimeBy(100)
 
         assertEquals(RobotState.SPEAKING, vm.robotState.value)
@@ -131,10 +131,10 @@ class ConversationViewModelTest {
     fun `session end triggers showSurvey`() = testScope.runTest {
         val vm = createViewModel()
 
-        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","value":"listening"}"""))
+        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","state":"engaged","robot_status":"listening"}"""))
         testScheduler.advanceTimeBy(100)
 
-        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","value":"idle"}"""))
+        eventsFlow.emit(WebSocketEvent.JsonMessage("state", """{"type":"state","state":"idle","robot_status":"listening"}"""))
         testScheduler.advanceTimeBy(100)
 
         assertTrue(vm.showSurvey.value)
