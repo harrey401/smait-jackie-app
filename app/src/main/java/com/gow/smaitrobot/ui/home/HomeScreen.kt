@@ -116,7 +116,7 @@ fun HomeScreen(
                     painter = painterResource(id = R.drawable.biorob_logo),
                     contentDescription = "BioRob Lab",
                     modifier = Modifier
-                        .height(200.dp)
+                        .height(220.dp)
                         .padding(start = 24.dp),
                     contentScale = ContentScale.Fit
                 )
