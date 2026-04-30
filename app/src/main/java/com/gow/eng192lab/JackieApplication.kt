@@ -35,6 +35,9 @@ class JackieApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Rive runtime — must be initialized before any RiveAnimationView is inflated.
+        app.rive.runtime.kotlin.core.Rive.init(this)
+
         // Build OkHttpClient with timeouts suitable for a persistent WebSocket
         val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

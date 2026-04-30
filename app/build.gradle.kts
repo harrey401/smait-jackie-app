@@ -77,6 +77,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.lottie.compose)
 
+    // Rive (animated bear avatar — state-machine driven by RobotState)
+    implementation(libs.rive.android)
+
     // Lifecycle + Activity Compose
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
