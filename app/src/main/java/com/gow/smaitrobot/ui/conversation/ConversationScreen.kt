@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.gow.smaitrobot.data.model.UiEvent
 import com.gow.smaitrobot.ui.common.SubScreenTopBar
-import com.gow.smaitrobot.ui.common.SurveyScreen
+import com.gow.smaitrobot.ui.common.NasaTlxScreen
 import com.gow.smaitrobot.ui.common.WieBackground
 
 /**
@@ -69,9 +69,9 @@ fun ConversationScreen(
     }
 
     if (showSurvey) {
-        SurveyScreen(
-            onSubmit = { survey -> viewModel.submitSurvey(survey) },
-            onDismiss = { survey -> viewModel.dismissSurvey(survey) }
+        NasaTlxScreen(
+            onSubmit = { tlx -> viewModel.submitNasaTlx(tlx) },
+            onDismiss = { tlx -> viewModel.dismissNasaTlx(tlx) }
         )
         return
     }

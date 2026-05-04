@@ -4,6 +4,7 @@ import android.util.Log
 import com.gow.smaitrobot.CaeAudioManager
 import com.gow.smaitrobot.TtsAudioPlayer
 import com.gow.smaitrobot.data.model.ChatMessage
+import com.gow.smaitrobot.data.model.NasaTlxData
 import com.gow.smaitrobot.data.model.RobotState
 import com.gow.smaitrobot.data.model.SurveyData
 import com.gow.smaitrobot.data.model.UiEvent
@@ -214,6 +215,20 @@ class ConversationViewModel(
         }
     }
 
+    /** Submit NASA-TLX raw subscale ratings to server, then end session and go Home. */
+    fun submitNasaTlx(tlx: NasaTlxData) {
+        wsRepo.send(buildNasaTlxJson(tlx))
+        endSession()
+        scope.launch { _uiEvents.send(UiEvent.NavigateTo(Screen.Home)) }
+    }
+
+    /** Auto-dismiss path for NASA-TLX (timeout). Submits whatever values are set. */
+    fun dismissNasaTlx(tlx: NasaTlxData) {
+        wsRepo.send(buildNasaTlxJson(tlx))
+        endSession()
+        scope.launch { _uiEvents.send(UiEvent.NavigateTo(Screen.Home)) }
+    }
+
     /** End the current session: tell server, clear state, mark inactive. */
     private fun endSession() {
         if (sessionActive) {
@@ -386,6 +401,24 @@ class ConversationViewModel(
      * }
      * ```
      */
+    private fun buildNasaTlxJson(tlx: NasaTlxData): String {
+        val responses = JSONObject().apply {
+            put("mental", tlx.mental)
+            put("physical", tlx.physical)
+            put("temporal", tlx.temporal)
+            put("performance", tlx.performance)
+            put("effort", tlx.effort)
+            put("frustration", tlx.frustration)
+        }
+        return JSONObject().apply {
+            put("type", "nasa_tlx")
+            put("responses", responses)
+            put("submitted_at", tlx.timestamp / 1000.0)
+            put("completed", tlx.completedInTime)
+            put("time_to_complete_ms", tlx.timeToCompleteMs)
+        }.toString()
+    }
+
     private fun buildSurveyJson(survey: SurveyData): String {
         return JSONObject().apply {
             put("type", "survey")
