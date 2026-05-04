@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.gow.eng192lab.data.model.UiEvent
 import com.gow.eng192lab.ui.common.SubScreenTopBar
-import com.gow.eng192lab.ui.common.SurveyScreen
+import com.gow.eng192lab.ui.common.NasaTlxScreen
 import com.gow.eng192lab.ui.common.WieBackground
 
 /**
@@ -46,6 +46,7 @@ fun ConversationScreen(
     val messages by viewModel.transcript.collectAsState()
     val robotState by viewModel.robotState.collectAsState()
     val showSurvey by viewModel.showSurvey.collectAsState()
+    val connected by viewModel.connected.collectAsState()
 
     val listState = rememberLazyListState()
 
@@ -69,14 +70,15 @@ fun ConversationScreen(
     }
 
     if (showSurvey) {
-        SurveyScreen(
-            onSubmit = { survey -> viewModel.submitSurvey(survey) },
-            onDismiss = { survey -> viewModel.dismissSurvey(survey) }
+        NasaTlxScreen(
+            onSubmit = { tlx -> viewModel.submitNasaTlx(tlx) },
+            onDismiss = { tlx -> viewModel.dismissNasaTlx(tlx) }
         )
         return
     }
 
     WieBackground {
+      Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             SubScreenTopBar(
                 title = "Ask Me Anything",
@@ -133,5 +135,16 @@ fun ConversationScreen(
                 }
             }
         }
+
+        // Real-time experimenter overlay — connection, robot state, turn count.
+        LiveStatusPill(
+            connected = connected,
+            robotState = robotState,
+            turnCount = messages.size,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 12.dp, end = 16.dp),
+        )
+      }
     }
 }
