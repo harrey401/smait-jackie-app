@@ -52,7 +52,7 @@ private val CellBorder = Color(0xFFB7A8D9)
 private const val STEP = 5
 private const val NUM_STOPS = 21
 private const val UNRATED = -1
-private const val TIMEOUT_MS = 240_000L
+private const val TIMEOUT_MS = 60_000L
 
 private data class TlxItem(
     val key: String,
