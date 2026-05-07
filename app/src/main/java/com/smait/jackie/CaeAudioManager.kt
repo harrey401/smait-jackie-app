@@ -222,10 +222,8 @@ class CaeAudioManager(private val context: Context) {
 
             for (fileName in ASSET_FILES) {
                 val target = java.io.File(CAE_WORK_DIR + fileName)
-                if (!target.exists()) {
-                    Log.i(TAG, "Copying asset: $fileName → $CAE_WORK_DIR")
-                    FileUtil.CopyAssets2Sdcard(context, fileName, CAE_WORK_DIR + fileName)
-                }
+                Log.i(TAG, "Copying asset: $fileName → $CAE_WORK_DIR")
+                FileUtil.CopyAssets2Sdcard(context, fileName, CAE_WORK_DIR + fileName)
             }
             Log.i(TAG, "CAE assets ready")
         } catch (e: Exception) {

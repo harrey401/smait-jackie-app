@@ -50,6 +50,7 @@ class ConversationViewModel(
     private var sessionActive = false
     private var isNavigating = false
     private var silenceJob: Job? = null
+    private var wasConversing = false
 
     init {
         caeAudioManager.setWriterCallback { bytes -> wsRepo.send(bytes) }
@@ -74,6 +75,7 @@ class ConversationViewModel(
         clearTranscript()
         _robotState.value = RobotState.IDLE
         sessionActive = true
+        wasConversing = false
         sendSessionCommand("start")
         resetSilenceTimer()
     }
@@ -131,7 +133,20 @@ class ConversationViewModel(
             "state" -> {
                 val sessionState = parseTextField(payload, "state") ?: "engaged"
                 val robotStatus = parseTextField(payload, "robot_status") ?: "listening"
-                _robotState.value = if (sessionState == "idle") RobotState.IDLE else mapRobotState(robotStatus)
+                val newState = if (sessionState == "idle") RobotState.IDLE else mapRobotState(robotStatus)
+                val prevState = _robotState.value
+                _robotState.value = newState
+
+                if (newState != RobotState.IDLE) {
+                    wasConversing = true
+                } else if (wasConversing && prevState != RobotState.IDLE) {
+                    // Session ended (goodbye or server timeout): return to Home
+                    wasConversing = false
+                    endSession()
+                    scope.launch {
+                        _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
+                    }
+                }
             }
             "nav_status" -> {
                 val status = parseTextField(payload, "status") ?: return
