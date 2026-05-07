@@ -14,7 +14,6 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.mediapipe.framework.image.BitmapImageBuilder
-import com.google.mediapipe.framework.image.MPImage
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
@@ -35,7 +34,7 @@ import java.util.concurrent.Executors
  * - OBSTACLE:  Obstacle ahead -> rotate 90 deg CW, resume
  * - COLLISION: Object < 0.1m -> stop 3s, rotate 45 deg CW
  *
- * Ported from Jason's RobotController.java, integrated with Jackie app architecture.
+ * Ported from the original Android RobotController, integrated with Jackie app architecture.
  *
  * @param chassisSender Callback to send rosbridge JSON through ChassisProxy.
  *                      Expects a cmd_vel Twist JSON string.
@@ -47,14 +46,8 @@ class FollowController(
         private const val TAG = "FollowController"
 
         // Thresholds (metres)
-        private const val FOLLOW_DISTANCE_M = 2.0
+        private const val FOLLOW_DISTANCE_M = 0.50
         private const val COLLISION_DISTANCE_M = 0.10
-        private const val TARGET_FOLLOW_DISTANCE_M = 0.8   // ← was hardcoded to 0.5; now explicit
-        private const val PAN_FF_GAIN = 0.002              // feed-forward gain (tune to taste)
-
-        // Add a field to remember which way the target was last moving
-        private var lastTargetVelX: Double = 0.0
-
 
         // Camera geometry
         private const val FRAME_WIDTH_PX = 640
@@ -65,13 +58,9 @@ class FollowController(
         private const val TURN_SPEED_RAD_S = 0.4f
         private val DEG_45_RAD = Math.PI / 4.0
         private val DEG_90_RAD = Math.PI / 2.0
-        // Updated startManoeuvre to accept direction:
-        private var scanDirection = 1f
-
 
         // Timing
         private const val COLLISION_PAUSE_MS = 3_000L
-
     }
 
     // Sub-systems
@@ -98,10 +87,6 @@ class FollowController(
         private set
     var onStateChanged: ((FsmState, Double) -> Unit)? = null
 
-    // Last frame timestamp for real dt
-    private var lastFrameMs = 0L
-
-
     enum class FsmState {
         FOLLOWING,
         SCAN_ROTATE,
@@ -110,8 +95,6 @@ class FollowController(
         COLLISION_TURN,
         CLEAR_CHECK
     }
-
-
 
     /**
      * Initialize MediaPipe and start camera analysis.
@@ -216,18 +199,13 @@ class FollowController(
 
     // ── MediaPipe result callback ──────────────────────────────────────────
 
-    private fun onMediaPipeResult(
-        result: FaceLandmarkerResult,
-        image: MPImage
-    ) {
+    private fun onMediaPipeResult(result: FaceLandmarkerResult, image: com.google.mediapipe.framework.image.MPImage) {
         if (!running) return
 
         // Convert landmarks to bounding rects
         val detections = result.faceLandmarks().map { face ->
-            var minX = Float.MAX_VALUE;
-            var maxX = -Float.MAX_VALUE
-            var minY = Float.MAX_VALUE;
-            var maxY = -Float.MAX_VALUE
+            var minX = Float.MAX_VALUE; var maxX = -Float.MAX_VALUE
+            var minY = Float.MAX_VALUE; var maxY = -Float.MAX_VALUE
             for (lm in face) {
                 val px = lm.x() * image.width
                 val py = lm.y() * image.height
@@ -240,27 +218,20 @@ class FollowController(
         // Run DeepSORT
         val confirmed = deepSort.update(detections)
 
-        // If current target is lost, find and pick the closest confirmed track using that person's
-        // face width that is largest and closest
+        // Lock onto first confirmed track
         if (targetTrackId == -1 && confirmed.isNotEmpty()) {
-            targetTrackId = confirmed.maxByOrNull { it.predictedRect().width() } !!.id
+            targetTrackId = confirmed[0].id
         }
 
-        // Pass live track object down to driveTowardFace
-        val targetTrack = confirmed.firstOrNull { it.id == targetTrackId }
-        if (targetTrack == null) targetTrackId = -1
+        // Find target rect
+        val targetRect = confirmed.firstOrNull { it.id == targetTrackId }?.predictedRect()
+        if (targetRect == null) targetTrackId = -1
 
-        if (targetTrack != null) {
-            lastTargetVelX = targetTrack.velocityX()   // remember direction
-        }
-
-        // Pass live track object to driveTowardFace
-        val targetRect = targetTrack?.predictedRect()
+        // Estimate distance
         val distanceM = if (targetRect != null) estimateDistance(targetRect.width()) else Double.MAX_VALUE
 
-        mainHandler.post { tick(targetRect, distanceM, targetTrack) }
-
-
+        // Hand off to FSM on main thread
+        mainHandler.post { tick(targetRect, distanceM) }
     }
 
     private fun estimateDistance(faceWidthPx: Int): Double {
@@ -270,7 +241,7 @@ class FollowController(
 
     // ── FSM tick ───────────────────────────────────────────────────────────
 
-    private fun tick(faceBounds: Rect?, distM: Double, targetTrack: KalmanTrack?) {
+    private fun tick(faceBounds: Rect?, distM: Double) {
         if (!running) return
 
         currentDistance = distM
@@ -287,8 +258,7 @@ class FollowController(
 
             FsmState.SCAN_ROTATE -> {
                 if (SystemClock.elapsedRealtime() < manoeuvreEndMs) {
-                    // Adjust speed and direction of rotation
-                    sendVelocity(0f, TURN_SPEED_RAD_S * scanDirection)
+                    sendVelocity(0f, TURN_SPEED_RAD_S) // CCW
                 } else {
                     sendVelocity(0f, 0f)
                     if (faceBounds != null && distM <= FOLLOW_DISTANCE_M) {
@@ -331,17 +301,6 @@ class FollowController(
                     enterState(FsmState.CLEAR_CHECK)
                 }
             }
-
-            FsmState.FOLLOWING -> {
-                if (faceBounds == null || distM > FOLLOW_DISTANCE_M) {
-                    enterState(FsmState.SCAN_ROTATE)
-                    return
-                }
-                driveTowardFace(faceBounds, distM, targetTrack!!)
-
-            }
-
-
         }
     }
 
@@ -368,31 +327,19 @@ class FollowController(
         val now = SystemClock.elapsedRealtime()
         when (next) {
             FsmState.SCAN_ROTATE -> startManoeuvre(DEG_45_RAD)
-
-            // In enterState, when transitioning to SCAN_ROTATE:
-            FsmState.SCAN_ROTATE -> {
-                // Rotate toward the direction the target was last moving
-                val scanDir = if (lastTargetVelX >= 0) 1f else -1f   // CCW if moving right, CW if left
-                startManoeuvre(DEG_45_RAD, scanDir)
-            }
             FsmState.OBSTACLE_TURN -> {
                 sendVelocity(0f, 0f)
                 startManoeuvre(DEG_90_RAD)
             }
-
             FsmState.COLLISION_STOP -> {
                 sendVelocity(0f, 0f)
                 manoeuvreEndMs = now + COLLISION_PAUSE_MS
             }
-
             FsmState.COLLISION_TURN -> startManoeuvre(DEG_45_RAD)
-            FsmState.CLEAR_CHECK, FsmState.FOLLOWING -> { /* no setup */
-            }
+            FsmState.CLEAR_CHECK, FsmState.FOLLOWING -> { /* no setup */ }
         }
         Log.d(TAG, "FSM -> $next")
         onStateChanged?.invoke(next, currentDistance)
-
-
     }
 
     private fun startManoeuvre(angleRad: Double) {
@@ -413,7 +360,7 @@ class FollowController(
         // Build rosbridge cmd_vel publish message
         val msg = JSONObject().apply {
             put("op", "publish")
-            put("topic", "/cmd_vel")
+            put("topic", "/cmd_vel_mux/input/navi_override")
             put("msg", JSONObject().apply {
                 put("linear", JSONObject().apply {
                     put("x", linearX.toDouble())
@@ -430,44 +377,4 @@ class FollowController(
 
         chassisSender(msg.toString())
     }
-
-    private fun driveTowardFace(face: Rect, distM: Double, targetTrack: KalmanTrack) {
-        // Real dt from actual frame cadence
-        val nowMs = SystemClock.elapsedRealtime()
-        val dt =
-            if (lastFrameMs == 0L) 0.033 else ((nowMs - lastFrameMs) / 1000.0).coerceIn(0.01, 0.1)
-        lastFrameMs = nowMs
-
-        // Lateral error: how far face center is from frame center
-        val dx = face.centerX() - FRAME_WIDTH_PX / 2.0
-
-        // Distance error: use actual metres, not face area
-        val distError =
-            distM - TARGET_FOLLOW_DISTANCE_M   // ← positive = too far, negative = too close
-
-        // PID outputs
-        var angZ = panPid.compute(dx, dt).coerceIn(-0.8, 0.8).toFloat()
-        var linX = distPid.compute(distError, dt).coerceIn(-0.3, 0.3).toFloat()
-
-        // ── Velocity feed-forward ──────────────────────────────────────────────
-        // Use the Kalman-estimated horizontal velocity to anticipate movement.
-        // If the person is drifting right (positive vx), add extra CW rotation.
-        val velFeedForward = (targetTrack.velocityX() * PAN_FF_GAIN).coerceIn(-0.3, 0.3).toFloat()
-        angZ += velFeedForward
-
-        // Safety: stop linear motion when very close
-        if (distM < COLLISION_DISTANCE_M + 0.05) linX = 0f
-
-        sendVelocity(linX, angZ)
-    }
-
-    private fun startManoeuvre(angleRad: Double, dir: Float = 1f) {
-        scanDirection = dir
-        val durationMs = ((angleRad / TURN_SPEED_RAD_S) * 1000).toLong()
-        manoeuvreEndMs = SystemClock.elapsedRealtime() + durationMs
-    }
-
-
-
-
 }

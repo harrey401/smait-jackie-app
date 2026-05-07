@@ -11,23 +11,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.gow.smaitrobot.data.model.UiEvent
-import com.gow.smaitrobot.ui.common.FeedbackDialog
 import com.gow.smaitrobot.ui.common.SubScreenTopBar
+import com.gow.smaitrobot.ui.common.SurveyScreen
+import com.gow.smaitrobot.ui.common.WieBackground
 
 /**
  * Primary interaction screen for conversing with Jackie.
@@ -35,7 +34,10 @@ import com.gow.smaitrobot.ui.common.SubScreenTopBar
  * Layout:
  * - SubScreenTopBar with back arrow
  * - Left: RobotAvatar (40%)
- * - Right: Chat transcript + camera button (60%)
+ * - Right: Chat transcript (60%)
+ *
+ * When the session ends (robot state returns to IDLE after conversing),
+ * a full-screen [SurveyScreen] overlay replaces the conversation view.
  */
 @Composable
 fun ConversationScreen(
@@ -44,10 +46,19 @@ fun ConversationScreen(
 ) {
     val messages by viewModel.transcript.collectAsState()
     val robotState by viewModel.robotState.collectAsState()
-    val showCamera by viewModel.showCamera.collectAsState()
-    val showFeedback by viewModel.showFeedback.collectAsState()
+    val showSurvey by viewModel.showSurvey.collectAsState()
 
     val listState = rememberLazyListState()
+
+    // Fresh session every time this screen appears; clean up on leave
+    LaunchedEffect(Unit) {
+        viewModel.onScreenEntered()
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.onScreenExited()
+        }
+    }
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -67,95 +78,78 @@ fun ConversationScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        SubScreenTopBar(
-            title = "Chat with Jackie",
-            onBack = { navController.popBackStack() }
+    // When survey is visible, show full-screen survey overlay instead of conversation
+    if (showSurvey) {
+        SurveyScreen(
+            onSubmit = { survey -> viewModel.submitSurvey(survey) },
+            onDismiss = { survey -> viewModel.dismissSurvey(survey) }
         )
+        return
+    }
 
-        Box(modifier = Modifier.weight(1f)) {
-            Row(modifier = Modifier.fillMaxSize()) {
-                // Left: Robot avatar (40%)
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(0.4f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    RobotAvatar(
-                        robotState = robotState,
-                        modifier = Modifier.size(200.dp)
-                    )
+    WieBackground {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SubScreenTopBar(
+                title = "Chat with Jackie",
+                onBack = {
+                    viewModel.onBackPressed()
                 }
+            )
 
-                // Right: Transcript + camera button (60%)
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(0.6f)
-                        .padding(end = 8.dp)
-                ) {
-                    LazyColumn(
-                        state = listState,
+            Box(modifier = Modifier.weight(1f)) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    // Left: Robot avatar (40%)
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .weight(0.4f),
+                        contentAlignment = Alignment.Center
                     ) {
-                        items(messages, key = { it.id }) { message ->
-                            ChatBubble(message = message)
-                        }
+                        RobotAvatar(
+                            robotState = robotState,
+                            modifier = Modifier.size(240.dp)
+                        )
+                    }
 
-                        if (messages.isEmpty()) {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        "Say something to start the conversation",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
+                    // Right: Transcript + camera button (60%)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(0.6f)
+                            .padding(end = 12.dp)
+                    ) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+                            items(messages, key = { it.id }) { message ->
+                                ChatBubble(message = message)
+                            }
+
+                            if (messages.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(48.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "Say something to start the conversation",
+                                            fontSize = 32.sp,
+                                            color = Color(0xFF1B2838).copy(alpha = 0.5f)
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = { viewModel.toggleCamera() },
-                            modifier = Modifier.size(48.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.CameraAlt,
-                                contentDescription = "Take selfie",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
                     }
                 }
-            }
 
-            if (showCamera) {
-                SelfieCapture(
-                    onDismiss = { viewModel.toggleCamera() },
-                    onCapture = { _ -> viewModel.toggleCamera() }
-                )
             }
         }
-    }
-
-    if (showFeedback) {
-        FeedbackDialog(
-            onSubmit = { feedback -> viewModel.sendFeedback(feedback) },
-            onDismiss = { viewModel.dismissFeedback() }
-        )
     }
 }

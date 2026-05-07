@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.gow.smaitrobot"
-        minSdk = 24 // changed from 23 to 24
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -22,7 +22,7 @@ android {
         }
     }
 
-    buildTypes {
+buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -84,6 +84,12 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // QR code composable (used in Plan 03 for result screen download URL)
+    implementation(libs.compose.qr.code)
+
+    // Photo Booth v2 — confetti reveal animation on ResultScreen
+    implementation("nl.dionsegijn:konfetti-compose:2.0.5")
 
     // MediaPipe Face Landmarker (Follow Mode)
     implementation("com.google.mediapipe:tasks-vision:0.10.14")

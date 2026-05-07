@@ -78,6 +78,7 @@ fun SelfieCapture(
     onCapture: (Bitmap) -> Unit
 ) {
     val context = LocalContext.current
+    var countdownStarted by remember { mutableStateOf(false) }
     var countdownValue by remember { mutableIntStateOf(3) }
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var showFlash by remember { mutableStateOf(false) }
@@ -134,8 +135,22 @@ fun SelfieCapture(
                 modifier = Modifier.fillMaxSize()
             )
 
+            // Before countdown: show capture button
+            if (!countdownStarted) {
+                Button(
+                    onClick = { countdownStarted = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(32.dp)
+                        .height(72.dp)
+                        .width(200.dp)
+                ) {
+                    Text("Take Photo", fontSize = 22.sp)
+                }
+            }
+
             // 3-2-1 countdown overlay
-            if (countdownValue > 0) {
+            if (countdownStarted && countdownValue > 0) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -148,13 +163,13 @@ fun SelfieCapture(
                     )
                 }
 
-                LaunchedEffect(Unit) {
+                LaunchedEffect(countdownStarted) {
                     for (i in 3 downTo 1) {
                         countdownValue = i
                         delay(1_000L)
                     }
                     countdownValue = 0
-                    // Capture frame
+                    // Set listener then fire a one-shot capture to the imageReader
                     imageReader.setOnImageAvailableListener({ reader ->
                         val image = reader.acquireNextImage() ?: return@setOnImageAvailableListener
                         val bmp = yuv420ToBitmap(image)
@@ -164,6 +179,16 @@ fun SelfieCapture(
                             showFlash = true
                         }
                     }, cameraHandler)
+                    // Trigger a capture request that targets the imageReader
+                    val cam = cameraDevice
+                    val session = captureSession
+                    if (cam != null && session != null) {
+                        val captureReq = cam.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+                            addTarget(imageReader.surface)
+                            set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO)
+                        }.build()
+                        session.capture(captureReq, null, cameraHandler)
+                    }
                 }
             }
 
@@ -220,6 +245,7 @@ fun SelfieCapture(
                     onClick = {
                         capturedBitmap = null
                         countdownValue = 3
+                        countdownStarted = false
                     },
                     modifier = Modifier.height(60.dp).weight(1f)
                 ) {
@@ -349,8 +375,30 @@ private fun saveBitmapToGallery(context: android.content.Context, bitmap: Bitmap
             val stream: OutputStream? = context.contentResolver.openOutputStream(it)
             stream?.use { os -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, os) }
         }
-        Log.i(TAG, "Selfie saved: $filename")
+        Log.i(TAG, "Selfie saved locally: $filename")
     } catch (e: Exception) {
-        Log.e(TAG, "Failed to save selfie", e)
+        Log.e(TAG, "Failed to save selfie locally", e)
+    }
+}
+
+/**
+ * Compresses a Bitmap to JPEG bytes and sends to server as a selfie binary frame.
+ * Frame format: 0x07 (type byte) + JPEG payload.
+ * Server saves it in the session log folder alongside audio and session JSON.
+ */
+fun sendSelfieToServer(bitmap: Bitmap, wsRepo: com.gow.smaitrobot.data.websocket.WebSocketRepository) {
+    try {
+        val out = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        val jpegBytes = out.toByteArray()
+
+        // Frame: 0x07 (selfie type) + JPEG bytes
+        val frame = ByteArray(1 + jpegBytes.size)
+        frame[0] = 0x07
+        System.arraycopy(jpegBytes, 0, frame, 1, jpegBytes.size)
+        wsRepo.send(frame)
+        Log.i(TAG, "Selfie sent to server (${jpegBytes.size} bytes)")
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to send selfie to server", e)
     }
 }
