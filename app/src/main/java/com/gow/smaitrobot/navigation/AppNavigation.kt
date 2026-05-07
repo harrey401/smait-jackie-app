@@ -32,6 +32,7 @@ import com.gow.smaitrobot.ui.facilities.FacilitiesScreen
 import com.gow.smaitrobot.ui.facilities.FacilitiesViewModel
 import com.gow.smaitrobot.ui.home.HomeScreen
 import com.gow.smaitrobot.ui.home.HomeViewModel
+import com.gow.smaitrobot.ui.seniorprojects.SeniorProjectsScreen
 import com.gow.smaitrobot.ui.navigation_map.NavigationMapScreen
 import com.gow.smaitrobot.ui.navigation_map.NavigationMapViewModel
 import com.gow.smaitrobot.ui.settings.SettingsScreen
@@ -223,6 +224,9 @@ fun AppScaffold(
             }
             composable<Screen.Follow> {
                 FollowScreen(followController = followController, navController = navController)
+            }
+            composable<Screen.SeniorProjects> {
+                SeniorProjectsScreen(navController = navController)
             }
         }
 

@@ -58,7 +58,7 @@ class JackieApplication : Application() {
         // Load event theme synchronously — required before the first frame is rendered.
         // loadSync() uses IO on the calling thread; acceptable in Application.onCreate()
         // since it runs before any Activity starts.
-        themeRepository.loadSync("hfes2026_theme.json")
+        themeRepository.loadSync("alumni_scholarship_2026_theme.json")
     }
 }
 

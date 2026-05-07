@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -32,6 +33,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,11 +65,9 @@ import com.gow.smaitrobot.ui.common.SponsorBar
 import com.gow.smaitrobot.ui.common.TopLogoBar
 import com.gow.smaitrobot.ui.common.WieBackground
 
-// HFES event colors (navy + purple palette)
-private val EventDark = Color(0xFF1B2838)
-private val EventAccent = Color(0xFF8BC53F)
-private val CardPrimary = Color(0xFF2D1B69)
-private val CardSecondary = Color(0xFF4A3278)
+// Event colors are now read from MaterialTheme.colorScheme inside HomeScreen,
+// which is wired to the active ThemeConfig JSON (see AppTheme.kt + ThemeRepository).
+// Keeping these as compatibility fallbacks only — DO NOT add new references.
 
 /**
  * Home screen — the primary landing screen on Jackie's kiosk display.
@@ -111,29 +111,43 @@ fun HomeScreen(
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // BioRob Lab logo (left, inset from edge)
+                // SJSU logo (left, inset from edge)
                 Image(
-                    painter = painterResource(id = R.drawable.biorob_logo),
-                    contentDescription = "BioRob Lab",
+                    painter = painterResource(id = R.drawable.sjsu_logo),
+                    contentDescription = "SJSU",
                     modifier = Modifier
-                        .height(220.dp)
+                        .height(180.dp)
                         .padding(start = 24.dp),
                     contentScale = ContentScale.Fit
                 )
 
-                // HFES banner (center) — stretches to right edge now that ME logo moved to sponsor bar
-                Box(
+                // Event header (center) — eventName + tagline pulled from active theme JSON
+                Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 24.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.hfes_banner),
-                        contentDescription = "HFES Western Regional Meeting",
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Fit
+                    Text(
+                        text = eventName,
+                        fontSize = 44.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 48.sp,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    if (tagline.isNotBlank()) {
+                        Text(
+                            text = tagline,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 30.sp,
+                            color = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 }
             }
 
@@ -246,11 +260,17 @@ private fun HomeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Alternating: purple, teal, teal, purple — diagonal pattern
-    val cardColor = if (cardIndex == 0 || cardIndex == 3) {
-        CardPrimary.copy(alpha = 0.85f)
+    // Alternating diagonal pattern using theme primary / tertiary
+    val isPrimaryCard = cardIndex == 0 || cardIndex == 3
+    val cardColor = if (isPrimaryCard) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.92f)
     } else {
-        CardSecondary.copy(alpha = 0.85f)
+        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.92f)
+    }
+    val onCardColor = if (isPrimaryCard) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onTertiary
     }
 
     Card(
@@ -270,12 +290,12 @@ private fun HomeCard(
             Icon(
                 imageVector = cardIcon(card.icon),
                 contentDescription = card.label,
-                tint = Color.White.copy(alpha = 0.9f),
+                tint = onCardColor.copy(alpha = 0.9f),
                 modifier = Modifier.size(56.dp)
             )
             Text(
                 text = card.label,
-                color = Color.White,
+                color = onCardColor,
                 fontSize = 74.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -285,7 +305,7 @@ private fun HomeCard(
             if (card.description.isNotBlank()) {
                 Text(
                     text = card.description,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = onCardColor.copy(alpha = 0.78f),
                     fontSize = 42.sp,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
@@ -308,6 +328,7 @@ private fun cardIcon(iconName: String): ImageVector = when (iconName) {
     "web" -> Icons.Filled.Language
     "camera" -> Icons.Filled.PhotoCamera
     "follow" -> Icons.Filled.DirectionsWalk
+    "school" -> Icons.Filled.School
     else -> Icons.Filled.Info
 }
 
@@ -323,7 +344,7 @@ private fun KeynoteDialog(
                 text = "Keynote Speakers",
                 fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = EventDark
+                color = MaterialTheme.colorScheme.onBackground
             )
         },
         text = {
@@ -334,7 +355,7 @@ private fun KeynoteDialog(
                     Text(
                         text = "Speaker details coming soon.",
                         fontSize = 26.sp,
-                        color = EventDark.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
                 } else {
                     speakers.forEach { speaker ->
@@ -344,14 +365,14 @@ private fun KeynoteDialog(
                                 modifier = Modifier
                                     .size(64.dp)
                                     .clip(CircleShape)
-                                    .background(CardSecondary.copy(alpha = 0.2f)),
+                                    .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     text = speaker.name.take(1),
                                     fontSize = 32.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = CardSecondary
+                                    color = MaterialTheme.colorScheme.tertiary
                                 )
                             }
                             Spacer(modifier = Modifier.width(16.dp))
@@ -360,18 +381,18 @@ private fun KeynoteDialog(
                                     text = speaker.name,
                                     fontSize = 28.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = EventDark
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
                                     text = speaker.title,
                                     fontSize = 22.sp,
-                                    color = EventAccent
+                                    color = MaterialTheme.colorScheme.secondary
                                 )
                                 if (speaker.bio.isNotBlank()) {
                                     Text(
                                         text = speaker.bio,
                                         fontSize = 20.sp,
-                                        color = EventDark.copy(alpha = 0.6f),
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                                         modifier = Modifier.padding(top = 4.dp)
                                     )
                                 }
@@ -383,7 +404,7 @@ private fun KeynoteDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", fontSize = 26.sp, color = EventAccent)
+                Text("Close", fontSize = 26.sp, color = MaterialTheme.colorScheme.secondary)
             }
         }
     )
