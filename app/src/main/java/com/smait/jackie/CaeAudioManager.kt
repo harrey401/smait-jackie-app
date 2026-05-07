@@ -39,7 +39,7 @@ class CaeAudioManager(private val context: Context) {
         private const val PCM_DEVICE = 0
         private const val PCM_CHANNELS = 8       // 8ch as reported by /proc/asound/card2/stream0
         private const val PCM_SAMPLE_RATE = 16000
-        private const val PCM_PERIOD_SIZE = 160
+        private const val PCM_PERIOD_SIZE = 1024
         private const val PCM_PERIOD_COUNT = 4
         private const val PCM_FORMAT = 0         // PCM_FORMAT_S16_LE
 
@@ -281,32 +281,39 @@ class CaeAudioManager(private val context: Context) {
             // Default -1 = "wait for wake word" which blocks onAudio callback (Pitfall 1).
             com.iflytek.iflyos.cae.CAE.CAESetRealBeam(0)
 
-            // Kill audioserver to release the ALSA device — it auto-restarts
-            // but by then we already hold the lock
+            // Auto-fix ALSA permissions via root. Without `su 0` this is a no-op
+            // under SELinux, which is why the lab Jackie's vendor init had to leave
+            // the device world-accessible. On Jackies with stricter perms (system:audio
+            // 660), the open fails until we chmod to 666.
             try {
-                val process = Runtime.getRuntime().exec(arrayOf("su", "0", "sh", "-c",
-                    "for p in /proc/[0-9]*/cmdline; do " +
-                    "if tr '\\0' ' ' < \$p 2>/dev/null | grep -q audioserver; then " +
-                    "kill \$(echo \$p | grep -o '[0-9]*'); fi; done"
+                val chmod = Runtime.getRuntime().exec(arrayOf(
+                    "su", "0", "chmod", "666",
+                    "/dev/snd/pcmC${PCM_CARD}D${PCM_DEVICE}c"
                 ))
-                process.waitFor()
-                Thread.sleep(500)
-                Log.i(TAG, "Killed audioserver to release ALSA device")
+                chmod.waitFor()
+                Log.i(TAG, "ALSA permissions chmod 666 (via su) on pcmC${PCM_CARD}D${PCM_DEVICE}c")
             } catch (e: Exception) {
-                Log.w(TAG, "Could not kill audioserver: ${e.message}")
+                Log.w(TAG, "Could not chmod ALSA device (non-fatal): ${e.message}")
             }
 
-            // Auto-fix ALSA permissions (resets on reboot, no adb needed)
-            try {
-                Runtime.getRuntime().exec("chmod 666 /dev/snd/pcmC${PCM_CARD}D${PCM_DEVICE}c").waitFor()
-                Log.i(TAG, "ALSA permissions set for pcmC${PCM_CARD}D${PCM_DEVICE}c")
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not set ALSA permissions (non-fatal): ${e.message}")
-            }
-
-            // Create ALSA recorder and start with retry (device may need time after audioserver kill)
+            // Race the respawn: lsof+kill the holder and immediately try ALSA in a
+            // tight loop. On Jackie, audio.service is an init service that respawns
+            // within milliseconds; sleeping between attempts loses the race. We give
+            // up only after many fast retries.
+            val killAndOpen = arrayOf("su", "0", "sh", "-c",
+                "PIDS=\$(lsof /dev/snd/pcmC${PCM_CARD}D${PCM_DEVICE}c 2>/dev/null " +
+                "| awk 'NR>1 {print \$2}' | sort -u); " +
+                "for pid in \$PIDS; do kill -9 \$pid 2>/dev/null; done"
+            )
             var started = false
-            for (attempt in 1..3) {
+            val maxAttempts = 30
+            for (attempt in 1..maxAttempts) {
+                try {
+                    Runtime.getRuntime().exec(killAndOpen).waitFor()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Kill attempt $attempt failed: ${e.message}")
+                }
+
                 alsaRecorder = AlsaRecorder.createInstance(
                     PCM_CARD,
                     PCM_DEVICE,
@@ -316,25 +323,26 @@ class CaeAudioManager(private val context: Context) {
                     PCM_PERIOD_COUNT,
                     PCM_FORMAT
                 )
-                Log.i(TAG, "Attempt $attempt: AlsaRecorder instance=${alsaRecorder != null}")
                 alsaRecorder?.setLogShow(false)
 
                 val result = alsaRecorder?.startRecording(pcmListener)
                 if (result == 0) {
                     isRunning.set(true)
-                    Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz) on attempt $attempt")
+                    Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz) on attempt $attempt/$maxAttempts")
                     sendCaeStatus(true)
                     started = true
                     break
                 } else {
-                    Log.e(TAG, "ALSA attempt $attempt failed: $result")
+                    if (attempt == 1 || attempt % 5 == 0) {
+                        Log.w(TAG, "ALSA attempt $attempt/$maxAttempts failed: result=$result — racing respawn")
+                    }
                     try { alsaRecorder?.stopRecording() } catch (_: Exception) {}
                     alsaRecorder = null
-                    Thread.sleep(1000)
+                    // No sleep — race against the respawn.
                 }
             }
             if (!started) {
-                Log.e(TAG, "All ALSA attempts failed — giving up")
+                Log.e(TAG, "All $maxAttempts ALSA attempts failed — giving up")
                 cleanup()
             }
 
