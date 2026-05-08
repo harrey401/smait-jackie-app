@@ -4,6 +4,7 @@ import android.util.Log
 import com.gow.smaitrobot.CaeAudioManager
 import com.gow.smaitrobot.TtsAudioPlayer
 import com.gow.smaitrobot.data.model.ChatMessage
+import com.gow.smaitrobot.data.model.NasaTlxData
 import com.gow.smaitrobot.data.model.RobotState
 import com.gow.smaitrobot.data.model.SurveyData
 import com.gow.smaitrobot.data.model.UiEvent
@@ -179,6 +180,11 @@ class ConversationViewModel(
             sendSessionCommand("end")
             sessionActive = false
         }
+        // Flush the AudioTrack locally so any PCM chunks already buffered
+        // from the previous response stop playing immediately. The server
+        // also cancels its own TTS synthesis on app_session_end, but the
+        // already-queued audio lives in AudioTrack until we flush it.
+        ttsPlayer.stop()
         clearTranscript()
         silenceJob?.cancel()
     }
@@ -207,6 +213,20 @@ class ConversationViewModel(
         scope.launch {
             _uiEvents.send(UiEvent.NavigateTo(Screen.Home))
         }
+    }
+
+    /** Submit NASA-TLX raw subscale ratings to server, then end session and go Home. */
+    fun submitNasaTlx(tlx: NasaTlxData) {
+        wsRepo.send(buildNasaTlxJson(tlx))
+        endSession()
+        scope.launch { _uiEvents.send(UiEvent.NavigateTo(Screen.Home)) }
+    }
+
+    /** Auto-dismiss path for NASA-TLX (timeout). Submits whatever values are set. */
+    fun dismissNasaTlx(tlx: NasaTlxData) {
+        wsRepo.send(buildNasaTlxJson(tlx))
+        endSession()
+        scope.launch { _uiEvents.send(UiEvent.NavigateTo(Screen.Home)) }
     }
 
     /** End the current session: tell server, clear state, mark inactive. */
@@ -290,8 +310,13 @@ class ConversationViewModel(
                 }
             }
             "tts_control" -> {
-                val cmd = parseTextField(payload, "command")
-                if (cmd == "stop") ttsPlayer.stop()
+                // Server sends {"type":"tts_control","action":"start"|"end"|"stop"}.
+                // "stop" is the explicit cancellation path (new-turn barge-in,
+                // app session exit) — drop every buffered PCM chunk right now
+                // so the AudioTrack doesn't keep playing the old utterance.
+                val action = parseTextField(payload, "action")
+                    ?: parseTextField(payload, "command")  // legacy field name
+                if (action == "stop") ttsPlayer.stop()
             }
             else -> Log.v(TAG, "Ignoring JSON message type: ${event.type}")
         }
@@ -376,6 +401,24 @@ class ConversationViewModel(
      * }
      * ```
      */
+    private fun buildNasaTlxJson(tlx: NasaTlxData): String {
+        val responses = JSONObject().apply {
+            put("mental", tlx.mental)
+            put("physical", tlx.physical)
+            put("temporal", tlx.temporal)
+            put("performance", tlx.performance)
+            put("effort", tlx.effort)
+            put("frustration", tlx.frustration)
+        }
+        return JSONObject().apply {
+            put("type", "nasa_tlx")
+            put("responses", responses)
+            put("submitted_at", tlx.timestamp / 1000.0)
+            put("completed", tlx.completedInTime)
+            put("time_to_complete_ms", tlx.timeToCompleteMs)
+        }.toString()
+    }
+
     private fun buildSurveyJson(survey: SurveyData): String {
         return JSONObject().apply {
             put("type", "survey")

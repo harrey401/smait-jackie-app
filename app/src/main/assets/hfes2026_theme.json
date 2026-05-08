@@ -28,7 +28,7 @@
       "label": "Photo Booth",
       "action": "navigate:photobooth",
       "icon": "camera",
-      "description": "Take a selfie with Jackie the robot!"
+      "description": "AI-Styled Photos"
     },
     {
       "label": "Schedule",
@@ -51,6 +51,10 @@
     {
       "name": "San José State University",
       "logoAsset": "sponsor_sjsu.png"
+    },
+    {
+      "name": "SJSU Mechanical Engineering",
+      "logoAsset": "sjsu_logo.png"
     },
     {
       "name": "SJSU Research Foundation",
@@ -106,6 +110,13 @@
       "speaker": "Christa Markadaki (Geometric), Silvia Martinez",
       "location": "Student Union Ballroom C",
       "track": "session"
+    },
+    {
+      "time": "2:15 PM",
+      "title": "Career Panel",
+      "speaker": "",
+      "location": "Student Union Ballroom C",
+      "track": "panel"
     },
     {
       "time": "3:00 PM",

@@ -83,6 +83,9 @@ data class ThemeColors(
     @SerializedName("onPrimary")
     val onPrimary: String = "#FFFFFF",
 
+    @SerializedName("onTertiary")
+    val onTertiary: String = "#FFFFFF",
+
     @SerializedName("onBackground")
     val onBackground: String = "#1A1A2E",
 
