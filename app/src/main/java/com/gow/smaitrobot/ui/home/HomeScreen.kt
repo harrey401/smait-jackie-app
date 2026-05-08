@@ -73,9 +73,9 @@ private val CardSecondary = Color(0xFF4A3278)
  * Home screen — the primary landing screen on Jackie's kiosk display.
  *
  * Layout:
- * 1. Top: Logo bar (HFES | Banner | SJSU) — long press opens hidden Settings
+ * 1. Top: Logo bar (ME Dept | Banner | SJSU) — long press opens hidden Settings
  * 2. Middle: Event conference graphic (left) + 4 cards in 2x2 grid (right)
- * 3. Bottom: Sponsor bar
+ * 3. Bottom: Sponsor bar (rolling)
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -96,7 +96,7 @@ fun HomeScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // 1. Top row: HFES (left) | Banner (center) | SJSU (right)
+            // 1. Top row: ME (left) | Banner (center) | SJSU (right)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -121,7 +121,7 @@ fun HomeScreen(
                     contentScale = ContentScale.Fit
                 )
 
-                // HFES banner (center)
+                // SJSU Mechanical Engineering Word Logo - center
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -129,8 +129,8 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.hfes_banner),
-                        contentDescription = "HFES Western Regional Meeting",
+                        painter = painterResource(id = R.drawable.me_dept_logo_gold_gray),
+                        contentDescription = "SJSU ME logo Gold Gray",
                         modifier = Modifier.fillMaxWidth(),
                         contentScale = ContentScale.Fit
                     )

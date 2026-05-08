@@ -38,11 +38,10 @@ import com.gow.smaitrobot.ui.common.WieBackground
  *
  *  Header
  *  ──────
- *  Supervisor: Dr. Zaidi   ←  big SJSU navy
+ *  Supervisor: Dr. Agarwal   ←  big SJSU navy
  *  ◯ Project Title         ←  gold heavy
  *    Team members          ←  muted dark
- *  ◯ ...
- *  Supervisor: Dr. Agarwal
+ *  ◯ Supervisor: Dr. Armani
  *  ...
  */
 @Composable
@@ -180,54 +179,17 @@ data class SeniorProject(val title: String, val team: String)
 data class SupervisorGroup(val supervisor: String, val projects: List<SeniorProject>)
 
 object SeniorProjectsData {
-    private val zaidi = SupervisorGroup(
-        "Dr. Zaidi",
-        listOf(
-            SeniorProject(
-                "3D Printing of Soft Materials (Soft Robotics)",
-                "Rylan Wong, Andrey Blinkov, Philip Wollman, and Jacob Steffen-Brune"
-            ),
-            SeniorProject(
-                "Asymmetrical Quadcopter with Off-Center Rotors",
-                "Edrick Corona Hernandez, Andrew Le, Gustav Wagner, Azeneth Muñoz, and Nolan Hujardo"
-            ),
-            SeniorProject(
-                "Characterization of Direct-to-Chip Liquid Cooling Cold Plates",
-                "Kevin Lam and Jashan Keith"
-            ),
-            SeniorProject(
-                "Pre-Activation Method For UV-Adhesives",
-                "Jason Sanstrom and Mason Lock"
-            ),
-            SeniorProject(
-                "Waterway Trash-Collecting Robot",
-                "Tam Bao Luong, Son Nguyen, Hoang Vu Ho, and Christopher Kintner"
-            ),
-            SeniorProject(
-                "Solar House",
-                "Ayane Gomi, Andy Luu, Luis Fernando Perez, Max Li, Krish Patel, Boutuivi Sanvee, and May Chih"
-            ),
-            SeniorProject(
-                "Advanced UV Plastic-to-Plastic Bonding",
-                "Antony Matei and Nasheeb Rana"
-            ),
-            SeniorProject(
-                "Ultra Compact Mechanical Scooter",
-                "Roy Baek, Kyle Mizukura, Phillip Tran, and Yuki Yamamoto"
-            )
-        )
-    )
 
     private val agarwal = SupervisorGroup(
         "Dr. Agarwal",
         listOf(
             SeniorProject(
                 "Net Deployment with Synchronous Drones",
-                "Ethan Muzzio, Austin Leporini, Daniel Ng Joshua, and Caleb James"
+                "Ethan Muzzio, Austin Leporini, Joshua Ng, and Caleb James"
             ),
             SeniorProject(
-                "Redundant Electronic Throttle & Brake Assist for Amputee Driver",
-                "Muhammed Shah, Raymond Alexander, Yuhao Chen, Darion De La Cruz, John King, and Davis Michael Salmon"
+                "Redundant Electronic Throttle & Brake Assist for Paraplegic Driver",
+                "Muhammed Shah, Raymond Alexander, Yuhao Chen, Darion de la Cruz, John King, and Davis Michael Salmon"
             ),
             SeniorProject(
                 "Powered Zipline Carrier",
@@ -235,11 +197,11 @@ object SeniorProjectsData {
             ),
             SeniorProject(
                 "Trash Catching Vacuum Robot",
-                "Patrick Hau Wong, Ornelas Gustavo Ledezma, Alejandro Cedeno, Kristopher Anh Kiet Do, and Branden Tan Tran"
+                "Patrick Hau Wong, Gustavo Ornelas, Alejandro Cedeno, Kristopher Anh Kiet Do, and Branden Tan Tran"
             ),
             SeniorProject(
                 "Electric Therapeutic Wheelchair",
-                "Josmar Vega Hernandez, Victor Manuel Jimenez Gil, Ely L. Lopez, Benjamin Xu Nguyen, and Arjay Savellani"
+                "Josmar Vega Hernandez, Victor Manuel Jimenez, Benjamin Xu Nguyen, RJ Villegas, Ely L. Lopez, and Arjay Savellano"
             )
         )
     )
@@ -248,12 +210,12 @@ object SeniorProjectsData {
         "Dr. Armani",
         listOf(
             SeniorProject(
-                "Peek Interface Screw",
+                "PEEK Interface Screw for ACL Reconstruction",
                 "Ethan Belleh, Lucas Peregrino, Josue Antonio Luis, and Cristina Pineda Carranza"
             ),
             SeniorProject(
-                "Joystick-Operated Wheelchair with LiDAR Obstacle Detection and Avoidance",
-                "Hasan Chharawalla, Odin Bruyere, Keshav Sreedharan, Cesar Garcia Perez, Joaquin Aguilera Aguilera, and Javier Gomez"
+                "Affordable Smart Wheelchair With Obstacle Avoidance",
+                "Joaquin Aguilera, Hasan Chharawalla, Odin Bruyere, Keshav Sreedharan, Cesar Garcia Perez, and Javier Gomez"
             ),
             SeniorProject(
                 "CXI In-Vacuum Interaction Point: Mini Characterization Station",
@@ -264,7 +226,7 @@ object SeniorProjectsData {
                 "Alec Lefteroff, Kenneth Luu, Nathan Yoakum, and Akul Verma"
             ),
             SeniorProject(
-                "Swarm Security Robots",
+                "Security Swarm Robots",
                 "Nelson Cortez, Kylar Lee, Redge Tolentino, Michael D'amore, and Jacob Miguel Maulino"
             ),
             SeniorProject(
@@ -278,31 +240,69 @@ object SeniorProjectsData {
         "Dr. Du",
         listOf(
             SeniorProject(
-                "Robot Assisted Shoulder Rehabilitation System",
-                "Caroline Glaser, Leonardo Calle, and Gerardo Saldivar"
+                "Shoulder Rehabilitation with Seven-Axis Robotic Arm",
+                "Caroline Glaser, Leonardo Calle Loor, and Gerardo Saldivar"
             ),
             SeniorProject(
-                "Rapid Assembly Modular Housing for Urban and Emergency Applications",
-                "Hasan Chharawalla, Odin Bruyere, Keshav Sreedharan, Cesar Garcia Perez, Joaquin Aguilera Aguilera, and Javier Gomez"
+                "loT-Enabled Modular Housing Unit",
+                "Lucca Aldana, Keely Brown, Christian Eric Balakid, Troy Buenaventura, Paul De Leon, and Vincent Vu"
             ),
             SeniorProject(
-                "Solar-Powered Thermal Management System for Modular Housing",
+                "Solar-Powered Thermal Management and Smart System for Modular Housing",
                 "Keely Brown, Nhat-Lan Nguyen, Jeanine Renoblas, Hirofumi Sato, and Dylan Tuazon"
             ),
             SeniorProject(
-                "Assembly Fixtures for Handheld Discectomy and Endplate Preparation System",
+                "Assembly Fixtures for the Handheld Discectomy and Endplate Preparation System",
                 "Landon Krivanec, Jordan Iversen, Kevin Li, Thao Nguyen, and Weston Uyekawa"
             ),
             SeniorProject(
-                "Variable Pressure (NPNS) Chamber Collar",
+                "Variable Neck-Pressure & Neck-Suction (NPNS) Chamber Collar",
                 "Victor Baird, James Do, Derrick Fong, E T Horton, and Christopher Xiong"
             ),
             SeniorProject(
-                "Air Quality Monitoring System & Data Analysis",
+                "Air Quality Sensor Data Compensation Model and Housing Redesign",
                 "Jake Holtz, Khanh Nguyen, Tayven Nguyen, Gabriel Mendoza, Hernan Mondragon-Becerra, and Will Watcha"
             )
         )
     )
 
-    val allGroups: List<SupervisorGroup> = listOf(zaidi, agarwal, armani, du)
+    private val zaidi = SupervisorGroup(
+        "Dr. Zaidi",
+        listOf(
+            SeniorProject(
+                "3D Printing of Soft Materials/Soft Robotics using Silicone",
+                "Andrey Blinkov, Philip Wollman, Rylan Wong, and Jacob Steffen-Brune"
+            ),
+            SeniorProject(
+                "Design and Fabrication of Test Stand for Quadcopter Drone with Asymmetrical Propellers",
+                "Edrick Corona Hernandez, Andrew Le, Gustav Wagner, Azeneth Muñoz, and Nolan Hujardo"
+            ),
+            SeniorProject(
+                "Characterization of Direct-to-Chip Liquid Cooling Cold Plates",
+                "Kevin Lam and Jashan Keith"
+            ),
+            SeniorProject(
+                "Feasibility of Pre-Activating Jet Dispensed UV-Activated Adhesives",
+                "Jason Sanstrom and Mason Lock"
+            ),
+            SeniorProject(
+                "Waterway Trash-Collecting Robot",
+                "Tam Bao Luong, Son Nguyen, Hoang Vu Ho, and Christopher Kintner"
+            ),
+            SeniorProject(
+                "Solar-Powered Tiny House",
+                "Ayane Gomi, Andy Luu, Luis Fernando Perez, Max Li, Krish Patel, Boutuivi Sanvee, and May Chih"
+            ),
+            SeniorProject(
+                "UV/Ozone Plastic-to-Plastic Bonding of PMMA",
+                "Antony Matei and Nasheeb Rana"
+            ),
+            SeniorProject(
+                "Ultra Compact Scooter",
+                "Roy Baek, Kyle Mizukura, Phillip Tran, and Yuki Yamamoto"
+            )
+        )
+    )
+
+    val allGroups: List<SupervisorGroup> = listOf(agarwal, armani, du, zaidi)
 }

@@ -166,9 +166,13 @@ private data class ScheduleSlot(val startMin: Int, val title: String, val locati
 // server-side LLM context for question answering; this panel shows only what
 // guests at the Alumni & Scholarships Event actually attend.
 private val ALUMNI_SCHEDULE = listOf(
-    ScheduleSlot(16 * 60, "Doors open · Senior Project Showcase begins", "Student Union Ballrooms"),
-    ScheduleSlot(17 * 60 + 30, "Scholarship Awards Ceremony", "Main stage"),
-    ScheduleSlot(18 * 60, "Dinner & Industry / Alumni Mixer", "Student Union Ballrooms"),
+    ScheduleSlot(16 * 60, "Doors open - Senior Project Showcase begins", "Student Union Ballroom C"),
+    ScheduleSlot(16 * 60, "Industry & Alumni Mixer begins", "Student Union Ballrooms"),
+    ScheduleSlot(17 * 60 + 30, "Dinner Service begins", "Food Stations - Student Union Ballroom B"),
+    ScheduleSlot(18 * 60, "Scholarship Awards Ceremony", "Mainstage - Student Union Ballroom A"),
+    ScheduleSlot(19 * 60 + 30, "Announcement of Most Engaging Senior Project Winner", "Mainstage - Student Union Ballroom A"),
+    ScheduleSlot(19 * 60 + 45, "Raffle Drawing", "Mainstage - Student Union Ballroom A"),
+    ScheduleSlot(20 * 60, "Closing Remarks", "Mainstage - Student Union Ballroom A"),
     ScheduleSlot(20 * 60, "Event ends", "")
 )
 
@@ -216,7 +220,7 @@ private fun EventInfoPanel() {
             lineHeight = 40.sp
         )
         Text(
-            text = "Thursday · May 8, 2026   •   $timeStr",
+            text = "Thursday, May 8, 2026   •   $timeStr",
             color = scheme.onPrimary.copy(alpha = 0.9f),
             fontSize = 20.sp,
             fontWeight = FontWeight.Medium,
@@ -257,7 +261,7 @@ private fun EventInfoPanel() {
             )
         } else {
             Text(
-                text = "EVENT BEGINS AT 9:00 AM",
+                text = "EVENT BEGINS AT 4:00 PM",
                 color = scheme.secondary,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold
@@ -304,7 +308,7 @@ private fun EventInfoPanel() {
 
         // ─── Vote-to-win line ─────────────────────────────────────
         Text(
-            text = "Vote: collect 9 stickers from 9 different teams, then submit at the voting table.",
+            text = "Vote: collect 9 stickers from 9 different teams, then submit at the voting table to be entered into tonight's raffle.",
             color = scheme.onPrimary.copy(alpha = 0.88f),
             fontSize = 16.sp,
             lineHeight = 20.sp,
