@@ -26,7 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -142,6 +144,12 @@ private fun SupervisorSection(group: SupervisorGroup) {
 @Composable
 private fun ProjectRow(project: SeniorProject) {
     val scheme = MaterialTheme.colorScheme
+    val goldGradient = Brush.linearGradient(
+        colors = listOf(
+            scheme.secondary,
+            Color(0xFFFBC02D)
+        )
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -161,7 +169,7 @@ private fun ProjectRow(project: SeniorProject) {
                 text = project.title,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.DarkGray,
+                style = TextStyle(brush = goldGradient),
                 lineHeight = 30.sp
             )
             Text(
