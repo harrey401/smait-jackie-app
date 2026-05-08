@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.gow.smaitrobot"
-        minSdk = 24 // changed from 23 to 24
+        minSdk = 24
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -22,7 +22,7 @@ android {
         }
     }
 
-    buildTypes {
+buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -77,6 +77,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.lottie.compose)
 
+    // Rive (animated bear avatar — state-machine driven by RobotState)
+    implementation(libs.rive.android)
+
     // Lifecycle + Activity Compose
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
@@ -85,6 +88,12 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // QR code composable (used in Plan 03 for result screen download URL)
+    implementation(libs.compose.qr.code)
+
+    // Photo Booth v2 — confetti reveal animation on ResultScreen
+    implementation("nl.dionsegijn:konfetti-compose:2.0.5")
+
     // MediaPipe Face Landmarker (Follow Mode)
     implementation("com.google.mediapipe:tasks-vision:0.10.14")
 
@@ -92,9 +101,6 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.3.1")
     implementation("androidx.camera:camera-lifecycle:1.3.1")
     implementation("androidx.camera:camera-view:1.3.1")
-
-//    // Optical flow and machine perception for facial recognition
-//    implementation("org.opencv:opencv:4.9.0")  // OpenCV Android Maven artifact
 
     // Tests
     testImplementation(libs.junit)

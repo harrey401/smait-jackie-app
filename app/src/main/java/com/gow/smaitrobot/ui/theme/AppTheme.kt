@@ -35,6 +35,7 @@ fun AppTheme(
         tertiary = colors.tertiary.toComposeColor(),
         background = colors.background.toComposeColor(),
         onPrimary = colors.onPrimary.toComposeColor(),
+        onTertiary = colors.onTertiary.toComposeColor(),
         onBackground = colors.onBackground.toComposeColor(),
         surface = colors.surface.toComposeColor(),
         onSurface = colors.onSurface.toComposeColor()

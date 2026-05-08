@@ -12,6 +12,7 @@ constraintlayout = "2.1.4"
 composeBom = "2025.01.01"
 navigationCompose = "2.8.9"
 lottieCompose = "6.6.0"
+riveAndroid = "9.5.3"
 okhttp = "4.12.0"
 gson = "2.11.0"
 kotlinxSerialization = "1.7.3"
@@ -21,6 +22,7 @@ turbine = "1.2.0"
 coroutines = "1.8.1"
 mockitoKotlin = "5.3.1"
 mockitoCore = "5.11.0"
+composeQrCode = "1.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +45,7 @@ compose-material-icons-extended = { group = "androidx.compose.material", name = 
 # Navigation + Lottie
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottieCompose" }
+rive-android = { group = "app.rive", name = "rive-android", version.ref = "riveAndroid" }
 
 # Networking + serialization
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
@@ -62,6 +65,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+compose-qr-code = { group = "com.lightspark", name = "compose-qr-code", version.ref = "composeQrCode" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

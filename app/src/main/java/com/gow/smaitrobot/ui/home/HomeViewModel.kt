@@ -3,6 +3,7 @@ package com.gow.smaitrobot.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gow.smaitrobot.data.model.CardConfig
+import com.gow.smaitrobot.data.model.SpeakerInfo
 import com.gow.smaitrobot.data.model.SponsorConfig
 import com.gow.smaitrobot.data.theme.ThemeRepository
 import com.gow.smaitrobot.navigation.Screen
@@ -31,6 +32,13 @@ sealed class CardAction {
      * @param contentKey  The content identifier (e.g. "keynote", "sessions").
      */
     data class ShowInlineContent(val contentKey: String) : CardAction()
+
+    /**
+     * Open an external URL in the browser.
+     *
+     * @param url  The URL to open.
+     */
+    data class OpenUrl(val url: String) : CardAction()
 }
 
 /**
@@ -71,6 +79,13 @@ class HomeViewModel(
             .stateIn(coroutineScope, SharingStarted.Eagerly, themeRepository.config.value.tagline)
     }
 
+    /** Speakers list from the active theme configuration. */
+    val speakers: StateFlow<List<SpeakerInfo>> by lazy {
+        themeRepository.config
+            .map { it.speakers }
+            .stateIn(coroutineScope, SharingStarted.Eagerly, themeRepository.config.value.speakers)
+    }
+
     /** Sponsors list from the active theme configuration. */
     val sponsors: StateFlow<List<SponsorConfig>> by lazy {
         themeRepository.config
@@ -108,12 +123,15 @@ class HomeViewModel(
                     "facilities" -> Screen.Facilities
                     "eventinfo" -> Screen.EventInfo
                     "home" -> Screen.Home
+                    "photobooth" -> Screen.PhotoBooth
                     "settings" -> Screen.Settings
                     "follow" -> Screen.Follow
+                    "seniorprojects" -> Screen.SeniorProjects
                     else -> return CardAction.ShowInlineContent(action)
                 }
                 CardAction.NavigateToTab(screen)
             }
+            "url" -> CardAction.OpenUrl(target)
             "inline" -> CardAction.ShowInlineContent(target)
             else -> CardAction.ShowInlineContent(action)
         }

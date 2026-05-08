@@ -55,9 +55,27 @@ sealed class Screen {
     }
 
     @Serializable
+    object PhotoBooth : Screen() {
+        override val label: String = "Photo Booth"
+        override val iconName: String = "CameraAlt"
+    }
+
+    @Serializable
     object Settings : Screen() {
         override val label: String = "Settings"
         override val iconName: String = "Settings"
+    }
+
+    @Serializable
+    data class Web(val url: String) : Screen() {
+        override val label: String = "Website"
+        override val iconName: String = "Language"
+    }
+
+    @Serializable
+    object SeniorProjects : Screen() {
+        override val label: String = "Senior Projects"
+        override val iconName: String = "School"
     }
 
     @Serializable

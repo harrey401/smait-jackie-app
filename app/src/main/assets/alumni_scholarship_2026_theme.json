@@ -1,0 +1,119 @@
+{
+  "appMode": "alumni_event",
+  "eventName": "Mechanical Engineering Alumni & Scholarships Event",
+  "tagline": "Honoring Our Scholars, Alumni, and Donors",
+  "logoAsset": "sjsu_logo.png",
+  "colors": {
+    "primary": "#0055A2",
+    "secondary": "#E5A823",
+    "tertiary": "#003B73",
+    "background": "#FFFFFF",
+    "onPrimary": "#FFFFFF",
+    "onTertiary": "#FFFFFF",
+    "onBackground": "#0A1F3D",
+    "surface": "#F4F7FB",
+    "onSurface": "#0A1F3D"
+  },
+  "fonts": {
+    "bodyFont": "Roboto",
+    "headingFont": "Roboto"
+  },
+  "cards": [
+    {
+      "label": "Ask Me Anything",
+      "action": "navigate:chat",
+      "icon": "chat",
+      "description": "Chat with Jackie about scholarships, donors, alumni, or the ME program"
+    },
+    {
+      "label": "Photo Booth",
+      "action": "navigate:photobooth",
+      "icon": "camera",
+      "description": "Take a celebratory photo with Jackie"
+    },
+    {
+      "label": "Senior Projects",
+      "action": "navigate:seniorprojects",
+      "icon": "school",
+      "description": "Browse this year's Mechanical Engineering senior projects"
+    },
+    {
+      "label": "ME Department",
+      "action": "url:https://www.sjsu.edu/me/index.php",
+      "icon": "web",
+      "description": "Visit the SJSU Mechanical Engineering department"
+    }
+  ],
+  "sponsors": [
+    { "name": "ME Endowment Scholarship", "logoAsset": "" },
+    { "name": "David A. Brown Fellowship in Mechatronics", "logoAsset": "" },
+    { "name": "Mark A. Pasquale Scholarship", "logoAsset": "" },
+    { "name": "Robert Dees Memorial Scholarship", "logoAsset": "" },
+    { "name": "Francis Huang Memorial Scholarship", "logoAsset": "" },
+    { "name": "Donor Endowed Scholarship", "logoAsset": "" },
+    { "name": "Berkeley Nucleonics Corp", "logoAsset": "sponsor_bnc.png" },
+    { "name": "Devcon", "logoAsset": "sponsor_devcon.png" },
+    { "name": "Jabil", "logoAsset": "sponsor_jabil.png" },
+    { "name": "Interlink Electronics", "logoAsset": "sponsor_interlink.png" },
+    { "name": "Monterey Mechanical", "logoAsset": "sponsor_monterey_mechanical.png" },
+    { "name": "SLAC National Accelerator Lab", "logoAsset": "sponsor_slac.png" },
+    { "name": "Stryker", "logoAsset": "sponsor_stryker.png" },
+    { "name": "Quantum Composers", "logoAsset": "sponsor_quantum_composers.png" },
+    { "name": "Vista Robotics", "logoAsset": "sponsor_vista_robotics.png" }
+  ],
+  "schedule": [
+    {
+      "time": "5:30 PM",
+      "title": "Reception & Welcome",
+      "speaker": "",
+      "location": "SJSU Engineering Building",
+      "track": "general"
+    },
+    {
+      "time": "6:00 PM",
+      "title": "Scholarship Awards Ceremony",
+      "speaker": "ME Department Faculty & Donors",
+      "location": "SJSU Engineering Building",
+      "track": "ceremony"
+    },
+    {
+      "time": "7:00 PM",
+      "title": "Alumni & Donor Networking",
+      "speaker": "",
+      "location": "SJSU Engineering Building",
+      "track": "general"
+    }
+  ],
+  "speakers": [
+    {
+      "name": "ME Endowment Scholarship",
+      "title": "For ME seniors, juniors, or graduate students of demonstrated excellence",
+      "bio": "Departmental scholarship recognizing academic excellence in Mechanical Engineering.",
+      "photoAsset": ""
+    },
+    {
+      "name": "David A. Brown Fellowship in Mechatronics",
+      "title": "For juniors, seniors, or graduate students in Mechatronics",
+      "bio": "Promotes professional development in Mechatronics and supports the SJSU Mechatronics program. Eligibility: ME106 or ME285 (or equivalent) prior to Spring 2025.",
+      "photoAsset": ""
+    },
+    {
+      "name": "Mark A. Pasquale Scholarship",
+      "title": "For undergraduate and graduate ME students",
+      "bio": "Awarded to students majoring in Mechanical Engineering.",
+      "photoAsset": ""
+    },
+    {
+      "name": "Robert Dees Memorial Scholarship",
+      "title": "For undergraduate or graduate ME students",
+      "bio": "Memorial scholarship for Mechanical Engineering students.",
+      "photoAsset": ""
+    },
+    {
+      "name": "Francis Huang Memorial Scholarship",
+      "title": "For juniors, seniors, or graduate ME students",
+      "bio": "Memorial scholarship for Mechanical Engineering students.",
+      "photoAsset": ""
+    }
+  ]
+}

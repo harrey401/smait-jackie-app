@@ -39,7 +39,7 @@ class CaeAudioManager(private val context: Context) {
         private const val PCM_DEVICE = 0
         private const val PCM_CHANNELS = 8       // 8ch as reported by /proc/asound/card2/stream0
         private const val PCM_SAMPLE_RATE = 16000
-        private const val PCM_PERIOD_SIZE = 1024
+        private const val PCM_PERIOD_SIZE = 160
         private const val PCM_PERIOD_COUNT = 4
         private const val PCM_FORMAT = 0         // PCM_FORMAT_S16_LE
 
@@ -190,6 +190,27 @@ class CaeAudioManager(private val context: Context) {
     }
 
     /**
+     * Optional text writer callback for JSON text frame delivery.
+     *
+     * When set, DOA JSON text frames are forwarded to this callback instead of direct webSocket.
+     * This ensures DOA works in ViewModel mode where [WebSocketRepository] owns the WebSocket.
+     *
+     * Used by [ConversationViewModel] to wire CaeAudioManager DOA into [WebSocketRepository]:
+     * ```kotlin
+     * caeAudioManager.setTextWriterCallback { json -> wsRepo.send(json) }
+     * ```
+     */
+    private var textWriterCallback: ((String) -> Unit)? = null
+
+    /**
+     * Set the text writer callback for outbound JSON text frames (e.g., DOA angle).
+     * Called from ConversationViewModel's init block alongside [setWriterCallback].
+     */
+    fun setTextWriterCallback(callback: (String) -> Unit) {
+        textWriterCallback = callback
+    }
+
+    /**
      * Copy CAE model/config files from assets to /sdcard/cae/
      * Must be called once before first use (e.g., in onCreate).
      * Safe to call multiple times — skips files that already exist.
@@ -260,26 +281,68 @@ class CaeAudioManager(private val context: Context) {
             // Default -1 = "wait for wake word" which blocks onAudio callback (Pitfall 1).
             com.iflytek.iflyos.cae.CAE.CAESetRealBeam(0)
 
-            // Create ALSA recorder instance for USB mic array (Bothlent UAC Dongle)
-            alsaRecorder = AlsaRecorder.createInstance(
-                PCM_CARD,
-                PCM_DEVICE,
-                PCM_CHANNELS,
-                PCM_SAMPLE_RATE,
-                PCM_PERIOD_SIZE,
-                PCM_PERIOD_COUNT,
-                PCM_FORMAT
-            )
-            alsaRecorder?.setLogShow(false)
+            // Kill whatever process holds the ALSA capture device.
+            // On Jackie this is audio.service (iFLYTEK vendor), NOT stock audioserver.
+            // Use lsof to find the actual holder rather than grepping by name.
+            try {
+                val lsof = Runtime.getRuntime().exec(arrayOf("su", "0", "sh", "-c",
+                    "lsof /dev/snd/pcmC${PCM_CARD}D${PCM_DEVICE}c 2>/dev/null | tail -n +2 | awk '{print \$2}'"
+                ))
+                val pids = lsof.inputStream.bufferedReader().readText().trim()
+                lsof.waitFor()
+                if (pids.isNotEmpty()) {
+                    for (pid in pids.lines()) {
+                        Runtime.getRuntime().exec(arrayOf("su", "0", "kill", pid)).waitFor()
+                        Log.i(TAG, "Killed ALSA holder PID $pid")
+                    }
+                    Thread.sleep(500)
+                } else {
+                    Log.i(TAG, "No process holding ALSA capture device")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not release ALSA device: ${e.message}")
+            }
 
-            // Start recording — audio flows: ALSA → adapter → CAE → onAudio callback
-            val result = alsaRecorder?.startRecording(pcmListener)
-            if (result == 0) {
-                isRunning.set(true)
-                Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz)")
-                sendCaeStatus(true)
-            } else {
-                Log.e(TAG, "ALSA recording failed to start: $result")
+            // Auto-fix ALSA permissions (resets on reboot, no adb needed)
+            try {
+                Runtime.getRuntime().exec(arrayOf("su", "0", "chmod", "666",
+                    "/dev/snd/pcmC${PCM_CARD}D${PCM_DEVICE}c")).waitFor()
+                Log.i(TAG, "ALSA permissions set for pcmC${PCM_CARD}D${PCM_DEVICE}c")
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not set ALSA permissions (non-fatal): ${e.message}")
+            }
+
+            // Create ALSA recorder and start with retry (device may need time after audioserver kill)
+            var started = false
+            for (attempt in 1..3) {
+                alsaRecorder = AlsaRecorder.createInstance(
+                    PCM_CARD,
+                    PCM_DEVICE,
+                    PCM_CHANNELS,
+                    PCM_SAMPLE_RATE,
+                    PCM_PERIOD_SIZE,
+                    PCM_PERIOD_COUNT,
+                    PCM_FORMAT
+                )
+                Log.i(TAG, "Attempt $attempt: AlsaRecorder instance=${alsaRecorder != null}")
+                alsaRecorder?.setLogShow(false)
+
+                val result = alsaRecorder?.startRecording(pcmListener)
+                if (result == 0) {
+                    isRunning.set(true)
+                    Log.i(TAG, "CAE beamforming started (Card $PCM_CARD, ${PCM_CHANNELS}ch, ${PCM_SAMPLE_RATE}Hz) on attempt $attempt")
+                    sendCaeStatus(true)
+                    started = true
+                    break
+                } else {
+                    Log.e(TAG, "ALSA attempt $attempt failed: $result")
+                    try { alsaRecorder?.stopRecording() } catch (_: Exception) {}
+                    alsaRecorder = null
+                    Thread.sleep(1000)
+                }
+            }
+            if (!started) {
+                Log.e(TAG, "All ALSA attempts failed — giving up")
                 cleanup()
             }
 
@@ -362,12 +425,16 @@ class CaeAudioManager(private val context: Context) {
      * Send DOA angle as JSON text WebSocket frame.
      * Format: {"type":"doa","angle":N,"beam":N}
      *
+     * Delivers to [textWriterCallback] if set (ViewModel/Repository pattern), otherwise
+     * falls through to direct [webSocket] send (legacy mode).
+     *
      * Uses WebSocket.send(String) — text frame, NOT binary.
      * (FIX 2: was binary ByteBuffer with 0x03 type byte on branch)
      */
     private fun sendDoaAngle(angle: Int, beam: Int) {
         try {
-            webSocket?.send(buildDoaJson(angle, beam))
+            val json = buildDoaJson(angle, beam)
+            textWriterCallback?.invoke(json) ?: webSocket?.send(json)
         } catch (e: Exception) {
             Log.e(TAG, "Send DOA error", e)
         }
