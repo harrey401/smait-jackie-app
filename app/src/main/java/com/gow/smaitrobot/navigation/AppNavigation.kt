@@ -217,8 +217,8 @@ fun AppScaffold(
                     Log.w(TAG, "Failed to parse Web route: ${e.message}")
                     null
                 }
-                WebViewScreen(
-                    url = screen?.url ?: "https://2026.siliconvalleywie.org/",
+                WebViewScreen( // update url accordingly to the respective event or department website
+                    url = screen?.url ?: "https://www.sjsu.edu/me/",
                     navController = navController
                 )
             }
