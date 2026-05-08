@@ -67,7 +67,7 @@ fun SeniorProjectsScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = scheme.primary,
+                        tint = Color.DarkGray,
                         modifier = Modifier.padding(8.dp)
                     )
                 }
@@ -83,7 +83,7 @@ fun SeniorProjectsScreen(
                         text = "Senior Projects",
                         fontSize = 32.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = scheme.secondary,
+                        color = Color.DarkGray,
                         lineHeight = 36.sp
                     )
                 }
@@ -122,13 +122,13 @@ private fun SupervisorSection(group: SupervisorGroup) {
             text = "Supervisor:",
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
-            color = scheme.secondary
+            color = Color.DarkGray
         )
         Text(
             text = group.supervisor,
             fontSize = 56.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = scheme.primary,
+            color = Color.DarkGray,
             lineHeight = 60.sp,
             modifier = Modifier.padding(bottom = 12.dp)
         )
@@ -154,21 +154,21 @@ private fun ProjectRow(project: SeniorProject) {
                 .padding(top = 6.dp, end = 16.dp)
                 .size(28.dp)
                 .clip(CircleShape)
-                .border(width = 3.dp, color = scheme.primary, shape = CircleShape)
+                .border(width = 3.dp, color = Color.DarkGray, shape = CircleShape)
         )
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = project.title,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = scheme.secondary,
+                color = Color.DarkGray,
                 lineHeight = 30.sp
             )
             Text(
                 text = project.team,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Normal,
-                color = scheme.onBackground.copy(alpha = 0.82f),
+                color = Color.DarkGray.copy(alpha = 0.82f),
                 lineHeight = 24.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
