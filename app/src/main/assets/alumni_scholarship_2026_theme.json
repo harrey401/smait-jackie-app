@@ -46,13 +46,13 @@
   ],
   "sponsors": [
     { "name": "ME Endowment Scholarship", "logoAsset": "" },
-    { "name": "David A. Brown Fellowship in Mechatronics", "logoAsset": "" },
-    { "name": "Mark A. Pasquale Scholarship", "logoAsset": "" },
-    { "name": "Robert Dees Memorial Scholarship", "logoAsset": "" },
-    { "name": "Francis Huang Memorial Scholarship", "logoAsset": "" },
-    { "name": "Donor Endowed Scholarship", "logoAsset": "" },
+    { "name": "Robert A. Dees Memorial Scholarship", "logoAsset": "donor_dees.png" },
+    { "name": "Mark A. Pasquale Scholarship", "logoAsset": "donor_pasquale.png" },
+    { "name": "S. Brooks Walton Scholarship", "logoAsset": "donor_sb_walton.png" },
+    { "name": "David A. Brown Fellowship in Mechatronics", "logoAsset": "donor_david_a_brown.png" },
+    { "name": "Francis Huang Memorial Scholarship", "logoAsset": "donor_huang.png" },
     { "name": "Berkeley Nucleonics Corp", "logoAsset": "sponsor_bnc.png" },
-    { "name": "Devcon", "logoAsset": "sponsor_devcon.png" },
+    { "name": "Devcon", "logoAsset": "sponsor_devcon_logo_new.png" },
     { "name": "Jabil", "logoAsset": "sponsor_jabil.png" },
     { "name": "Interlink Electronics", "logoAsset": "sponsor_interlink.png" },
     { "name": "Monterey Mechanical", "logoAsset": "sponsor_monterey_mechanical.png" },
@@ -92,7 +92,7 @@
       "photoAsset": ""
     },
     {
-      "name": "David A. Brown Fellowship in Mechatronics",
+      "name": "David A. Brown Fellowship in Mechatronics Scholarship",
       "title": "For juniors, seniors, or graduate students in Mechatronics",
       "bio": "Promotes professional development in Mechatronics and supports the SJSU Mechatronics program. Eligibility: ME106 or ME285 (or equivalent) prior to Spring 2025.",
       "photoAsset": ""
