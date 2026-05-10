@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.smait.jackie.data.robot.RobotActionController
 import com.smait.jackie.data.theme.ThemeRepository
+import com.smait.jackie.data.tour.TourRepository
 import com.smait.jackie.data.websocket.WebSocketRepository
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -34,6 +35,9 @@ class JackieApplication : Application() {
     lateinit var robotActionController: RobotActionController
         private set
 
+    lateinit var tourRepository: TourRepository
+        private set
+
     var chassisProxy: ChassisProxy? = null
 
     override fun onCreate() {
@@ -58,11 +62,12 @@ class JackieApplication : Application() {
             player.setVolume(prefs.getFloat("tts_volume", 0.5f))
         }
         robotActionController = RobotActionController(webSocketRepository).also { it.start() }
+        tourRepository = TourRepository(this, webSocketRepository).also { it.start() }
 
         // Load event theme synchronously — required before the first frame is rendered.
         // loadSync() uses IO on the calling thread; acceptable in Application.onCreate()
         // since it runs before any Activity starts.
-        themeRepository.loadSync("smait_theme.json")
+        themeRepository.loadSync("alumni_scholarship_2026_theme.json")
     }
 }
 

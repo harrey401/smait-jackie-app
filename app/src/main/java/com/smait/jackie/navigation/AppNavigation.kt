@@ -40,6 +40,7 @@ fun AppScaffold(
     val context = LocalContext.current
     val wsRepo = context.jackieApp.webSocketRepository
     val themeRepo = context.jackieApp.themeRepository
+    val tourRepo = context.jackieApp.tourRepository
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -52,7 +53,7 @@ fun AppScaffold(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T =
-                NavigationMapViewModel(wsRepo) as T
+                NavigationMapViewModel(wsRepo, tourRepo) as T
         }
     )
     val ttsPlayer = remember { context.jackieApp.ttsAudioPlayer }

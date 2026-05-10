@@ -62,9 +62,9 @@ fun NavigationMapScreen(
     navController: NavHostController,
 ) {
     val tourState by viewModel.tourState.collectAsState()
+    val stops by viewModel.stops.collectAsState()
     val currentIndex = activeIndex(tourState)
-    val stops = OfficeTour.stops
-    val currentStop = currentIndex?.let { stops[it] }
+    val currentStop = currentIndex?.let { stops.getOrNull(it) }
 
     Box(
         modifier = Modifier

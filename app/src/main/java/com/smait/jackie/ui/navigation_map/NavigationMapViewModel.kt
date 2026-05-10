@@ -5,8 +5,12 @@ import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smait.jackie.data.model.NavStatus
+import com.smait.jackie.data.model.RemoteTourStop
+import com.smait.jackie.data.model.TourManifest
+import com.smait.jackie.data.tour.TourRepository
 import com.smait.jackie.data.websocket.WebSocketEvent
 import com.smait.jackie.data.websocket.WebSocketRepository
+import com.smait.jackie.ui.util.iconForName
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -35,6 +39,7 @@ import org.json.JSONObject
  */
 class NavigationMapViewModel(
     private val wsRepo: WebSocketRepository,
+    private val tourRepo: TourRepository? = null,
     private val bitmapDecoder: (ByteArray, Int, Int) -> Bitmap? = { bytes, offset, length ->
         BitmapFactory.decodeByteArray(bytes, offset, length)
     },
@@ -57,7 +62,14 @@ class NavigationMapViewModel(
     private val _tourState = MutableStateFlow<TourState>(TourState.Idle)
     val tourState: StateFlow<TourState> = _tourState.asStateFlow()
 
-    private val stops = OfficeTour.stops
+    private val _stops = MutableStateFlow(OfficeTour.stops)
+    /** Current tour stops — remote manifest from cockpit, or [OfficeTour.stops] fallback. */
+    val stops: StateFlow<List<TourStop>> = _stops.asStateFlow()
+
+    private val _dwellMs = MutableStateFlow(OfficeTour.DWELL_MS)
+    val dwellMs: StateFlow<Long> = _dwellMs.asStateFlow()
+
+    private val currentStops: List<TourStop> get() = _stops.value
     private var dwellJob: Job? = null
 
     init {
@@ -70,12 +82,38 @@ class NavigationMapViewModel(
                 }
             }
         }
+        tourRepo?.let { repo ->
+            effectiveScope.launch {
+                repo.manifest.collect { manifest -> applyManifest(manifest) }
+            }
+        }
     }
+
+    private fun applyManifest(manifest: TourManifest?) {
+        // Empty/missing manifest → keep the built-in default so a misconfigured
+        // robot still gives a reasonable tour out of the box.
+        val remoteStops = manifest?.stops?.takeIf { it.isNotEmpty() }
+        if (remoteStops == null) {
+            _stops.value = OfficeTour.stops
+            _dwellMs.value = OfficeTour.DWELL_MS
+            return
+        }
+        _stops.value = remoteStops.map { it.toTourStop() }
+        _dwellMs.value = manifest.dwellMs.takeIf { it > 0L } ?: OfficeTour.DWELL_MS
+    }
+
+    private fun RemoteTourStop.toTourStop(): TourStop = TourStop(
+        poi = poi,
+        title = title,
+        narration = narration,
+        icon = iconForName(icon),
+        enRouteRemark = enRouteRemark?.takeIf { it.isNotBlank() },
+    )
 
     // --- Tour controls ---
 
     fun startTour() {
-        if (stops.isEmpty()) return
+        if (currentStops.isEmpty()) return
         cancelDwell()
         navigateToStop(0)
     }
@@ -150,28 +188,30 @@ class NavigationMapViewModel(
     // --- State transitions ---
 
     private fun navigateToStop(index: Int) {
-        if (index !in stops.indices) {
+        val snapshot = currentStops
+        if (index !in snapshot.indices) {
             _tourState.value = TourState.Complete
             return
         }
         _tourState.value = TourState.Navigating(index)
-        sendNavigate(stops[index].poi, index)
+        sendNavigate(snapshot[index].poi, index)
         // Speak the en-route remark immediately while the robot starts driving;
         // landmark gets mentioned without making it its own stop.
-        stops[index].enRouteRemark?.let { remark -> sendTts(remark) }
+        snapshot[index].enRouteRemark?.let { remark -> sendTts(remark) }
     }
 
     private fun speakAtStop(index: Int) {
-        if (index !in stops.indices) return
+        val snapshot = currentStops
+        if (index !in snapshot.indices) return
         _tourState.value = TourState.Speaking(index)
-        sendTts(stops[index].narration)
+        sendTts(snapshot[index].narration)
     }
 
     private fun startDwell(index: Int) {
         cancelDwell()
         _tourState.value = TourState.Dwelling(index)
         dwellJob = effectiveScope.launch {
-            delay(OfficeTour.DWELL_MS)
+            delay(_dwellMs.value)
             advanceFrom(index)
         }
     }
@@ -179,7 +219,7 @@ class NavigationMapViewModel(
     private fun advanceFrom(index: Int) {
         cancelDwell()
         val next = index + 1
-        if (next >= stops.size) {
+        if (next >= currentStops.size) {
             _tourState.value = TourState.Complete
         } else {
             navigateToStop(next)
@@ -229,7 +269,7 @@ class NavigationMapViewModel(
 
     private fun onArrived(destination: String) {
         val state = _tourState.value
-        if (state is TourState.Navigating && stops.getOrNull(state.index)?.poi == destination) {
+        if (state is TourState.Navigating && currentStops.getOrNull(state.index)?.poi == destination) {
             speakAtStop(state.index)
         }
     }
